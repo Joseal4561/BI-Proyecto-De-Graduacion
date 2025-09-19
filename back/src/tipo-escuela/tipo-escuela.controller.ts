@@ -1,37 +1,37 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { EscuelaService } from './escuelas.service';
-import { CreateEscuelaDto } from './dto/create-escuela.dto';
-import { UpdateEscuelaDto } from './dto/update-escuela.dto';
+import { TipoEscuelaService } from './tipo-escuela.service';
+import {CreateTipoEscuelaDto} from './dto/create-tipo-escuela.dto';
+import {UpdateTipoEscuelaDto} from './dto/update-tipo-escuela.dto';
 
-@Controller('escuelas')
+@Controller('tipos-escuelas')
 @UseGuards(AuthGuard('jwt'))
-export class EscuelaController {
-  constructor(private readonly escuelaService: EscuelaService) {}
+export class TipoEscuelaController {
+  constructor(private readonly tipoEscuelaService: TipoEscuelaService) {}
 
   @Post()
-  create(@Body() createEscuelaDto: CreateEscuelaDto, @Request() req) {
-    return this.escuelaService.create(createEscuelaDto, req.user.role);
+  create(@Body() createTipoEscuelaDto: CreateTipoEscuelaDto, @Request() req) {
+    return this.tipoEscuelaService.create(createTipoEscuelaDto, req.user.role);
   }
 
   @Get()
   findAll() {
-    return this.escuelaService.findAll();
+    return this.tipoEscuelaService.findAll();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.escuelaService.findOne(+id);
+    return this.tipoEscuelaService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEscuelaDto: UpdateEscuelaDto, @Request() req) {
-    return this.escuelaService.update(+id, updateEscuelaDto, req.user.role);
+  update(@Param('id') id: string, @Body() updateTipoEscuelaDto: UpdateTipoEscuelaDto, @Request() req) {
+    return this.tipoEscuelaService.update(+id, updateTipoEscuelaDto, req.user.role);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
-    return this.escuelaService.remove(+id, req.user.role);
+    return this.tipoEscuelaService.remove(+id, req.user.role);
   }
 
   @Post('bulk-upload')
@@ -43,7 +43,7 @@ export class EscuelaController {
         throw new BadRequestException('No se proporcionaron datos válidos para importar');
       }
 
-      const results = await this.escuelaService.bulkInsert(data);
+      const results = await this.tipoEscuelaService.bulkInsert(data);
       
       return {
         success: true,

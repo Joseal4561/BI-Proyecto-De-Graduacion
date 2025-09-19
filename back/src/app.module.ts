@@ -3,7 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { DatosEducativosModule } from './datos-educativos/datos-educativos.module';
-import { EscuelasModule } from './escuelas/escuelas.module';
+import { EscuelaModule } from './escuelas/escuelas.module';
+import { TipoEscuelaModule } from './tipo-escuela/tipo-escuela.module';
+import { MunicipioModule } from './municipios/municipio.module';
 import { UserModule } from './user/user.module';
 import { User } from './entities/user.entity';
 import { Escuela } from './entities/escuela.entity';
@@ -32,8 +34,10 @@ import { Municipio } from './entities/municipio.entity';
     }),
     AuthModule,
     DatosEducativosModule,
-    EscuelasModule,
+    EscuelaModule,
     UserModule,
+    TipoEscuelaModule,
+    MunicipioModule,
   ],
 })
 export class AppModule {}

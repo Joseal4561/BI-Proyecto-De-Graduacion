@@ -45,10 +45,17 @@ export class DatosEducativosService {
       throw new ForbiddenException('Only admin users can update records');
     }
 
-    const datos = await this.findOne(id);
-    Object.assign(datos, updateDatosEducativosDto);
-    return this.datosEducativosRepository.save(datos);
+    const datosToUpdate = await this.datosEducativosRepository.findOne({ where: { id } });
+
+    if (!datosToUpdate) {
+      throw new NotFoundException(`DatosEducativos with ID ${id} not found`);
+    }
+
+    // Explicitly update each property from the DTO
+    Object.assign(datosToUpdate, updateDatosEducativosDto);
+    return this.datosEducativosRepository.save(datosToUpdate);
   }
+
 
   async remove(id: number, userRole: string): Promise<void> {
     if (userRole !== 'admin') {

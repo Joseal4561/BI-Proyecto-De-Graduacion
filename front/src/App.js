@@ -6,6 +6,8 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import DatosEducativos from './components/DatosEducativos';
 import Reportes from './components/Reportes'; 
+import Escuelas from './components/Escuela';
+import Users from './components/Users';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -43,43 +45,6 @@ const PublicRoute = ({ children }) => {
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
 };
 
-
-const Escuelas = () => (
-  <div>
-    <h2>Escuelas</h2>
-    <div className="alert alert-info">
-      <h4>🚧 En Desarrollo</h4>
-      <p>Esta sección estará disponible en la siguiente fase del proyecto.</p>
-      <p>Aquí podrás gestionar las escuelas del sistema.</p>
-    </div>
-  </div>
-);
-
-
-
-const Usuarios = () => {
-  const { user } = useAuth();
-  
-  if (user?.role !== 'admin') {
-    return (
-      <div className="alert alert-danger">
-        <h4>Acceso Denegado</h4>
-        <p>No tienes permisos para acceder a esta sección.</p>
-      </div>
-    );
-  }
-  
-  return (
-    <div>
-      <h2>Usuarios</h2>
-      <div className="alert alert-info">
-        <h4>🚧 En Desarrollo</h4>
-        <p>Esta sección estará disponible en la siguiente fase del proyecto.</p>
-        <p>Aquí podrás gestionar los usuarios del sistema.</p>
-      </div>
-    </div>
-  );
-};
 
 function AppContent() {
   return (
@@ -144,7 +109,7 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Layout>
-              <Usuarios />
+              <Users />
             </Layout>
           </ProtectedRoute>
         } 

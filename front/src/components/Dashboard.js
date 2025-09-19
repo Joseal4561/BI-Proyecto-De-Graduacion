@@ -23,11 +23,11 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch datos educativos
+  
       const datosResponse = await axios.get('http://localhost:3000/datos-educativos');
       const datos = datosResponse.data;
       
-      // Fetch escuelas
+      
       const escuelasResponse = await axios.get('http://localhost:3000/escuelas');
       const escuelas = escuelasResponse.data;
 
