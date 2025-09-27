@@ -12,6 +12,8 @@ import { Escuela } from './entities/escuela.entity';
 import { DatosEducativos } from './entities/datos-educativos.entity';
 import { TipoEscuela } from './entities/tipo-escuela.entity';
 import { Municipio } from './entities/municipio.entity';
+import { PrediccionIA } from './entities/ai.entity';
+import { PrediccionesIaModule } from './ai/predicciones-ia.module';
 
 @Module({
   imports: [
@@ -27,7 +29,7 @@ import { Municipio } from './entities/municipio.entity';
         username: 'root',
         password: 'root',
         database: 'db_educacion',
-        entities: [User, Escuela, DatosEducativos, TipoEscuela, Municipio],
+        entities: [User, Escuela, DatosEducativos, TipoEscuela, Municipio, PrediccionIA],
         synchronize: false, 
       }),
       inject: [ConfigService],
@@ -38,6 +40,7 @@ import { Municipio } from './entities/municipio.entity';
     UserModule,
     TipoEscuelaModule,
     MunicipioModule,
+    PrediccionesIaModule
   ],
 })
 export class AppModule {}

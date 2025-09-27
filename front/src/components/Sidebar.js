@@ -37,6 +37,12 @@ const Sidebar = () => {
       label: 'Usuarios',
       icon: '👥',
       roles: ['admin']
+    },
+    {
+      path: '/ai-predictions',
+      label: 'Predicciones IA',
+      icon: '🤖',
+      roles: ['admin', 'user']
     }
   ];
 

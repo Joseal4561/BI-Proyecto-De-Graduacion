@@ -8,6 +8,7 @@ import DatosEducativos from './components/DatosEducativos';
 import Reportes from './components/Reportes'; 
 import Escuelas from './components/Escuela';
 import Users from './components/Users';
+import AIPrediction from './components/Aipredictions';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -110,6 +111,17 @@ function AppContent() {
           <ProtectedRoute>
             <Layout>
               <Users />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/ai-predictions" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AIPrediction />
             </Layout>
           </ProtectedRoute>
         } 

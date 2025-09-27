@@ -87,7 +87,7 @@ export class DatosEducativosService {
     let failed = 0;
 
     // Process data in batches to avoid overwhelming the database
-    const batchSize = 100;
+    const batchSize = 1000;
     
     for (let i = 0; i < data.length; i += batchSize) {
       const batch = data.slice(i, i + batchSize);

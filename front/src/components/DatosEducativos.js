@@ -165,24 +165,37 @@ const DatosEducativos = () => {
   };
 
   const processFileData = (rawData) => {
-    const processed = rawData.map((row, index) => {
-      // Map column names to match your entity structure
-      const mappedRow = {
-        escuelaId: findEscuelaId(row.escuela || row.nombre_escuela || row.school || ''),
-        anio: parseInt(row.anio || row.año || row.year || new Date().getFullYear()),
-        semestre: String(row.semestre || row.semester || '1'),
-        cantidadAlumnos: parseInt(row.cantidad_alumnos || row.alumnos || row.students || 0),
-        numeroInscripciones: parseInt(row.numero_inscripciones || row.inscripciones || row.enrollments || 0),
-        tasaDesercion: parseFloat(row.tasa_desercion || row.desercion || row.dropout_rate || 0),
-        tasaPromocion: parseFloat(row.tasa_promocion || row.promocion || row.promotion_rate || null),
-        numeroMaestros: parseInt(row.numero_maestros || row.maestros || row.teachers || null),
-        promedioCalificaciones: parseFloat(row.promedio_calificaciones || row.promedio || row.average_grade || null),
-        esUrbana: parseBoolean(row.es_urbana || row.urbana || row.urban || true),
-        rowIndex: index + 1
-      };
-      
-      return mappedRow;
-    });
+  const processed = rawData.map((row, index) => {
+    let escuelaId = null;
+    
+    
+    if (row.escuela_id || row.escuelaId) {
+      escuelaId = parseInt(row.escuela_id || row.escuelaId);
+    } 
+  
+    else if (row.escuela || row.nombre_escuela || row.school) {
+      escuelaId = findEscuelaId(row.escuela || row.nombre_escuela || row.school || '');
+    }
+    
+    const mappedRow = {
+      escuelaId: escuelaId,
+      anio: parseInt(row.anio || row.año || row.year || new Date().getFullYear()),
+      semestre: String(row.semestre || row.semester || '1'),
+      cantidadAlumnos: parseInt(row.cantidad_alumnos || row.cantidadAlumnos || row.alumnos || row.students || 0),
+      numeroInscripciones: parseInt(row.numero_inscripciones || row.numeroInscripciones || row.inscripciones || row.enrollments || 0),
+      tasaDesercion: parseFloat(row.tasa_desercion || row.tasaDesercion || row.desercion || row.dropout_rate || 0),
+      tasaPromocion: row.tasa_promocion || row.tasaPromocion || row.promocion || row.promotion_rate ? 
+        parseFloat(row.tasa_promocion || row.tasaPromocion || row.promocion || row.promotion_rate) : null,
+      numeroMaestros: row.numero_maestros || row.numeroMaestros || row.maestros || row.teachers ? 
+        parseInt(row.numero_maestros || row.numeroMaestros || row.maestros || row.teachers) : null,
+      promedioCalificaciones: row.promedio_calificaciones || row.promedioCalificaciones || row.promedio || row.average_grade ? 
+        parseFloat(row.promedio_calificaciones || row.promedioCalificaciones || row.promedio || row.average_grade) : null,
+      esUrbana: parseBoolean(row.es_urbana || row.esUrbana || row.urbana || row.urban),
+      rowIndex: index + 2 
+    };
+    
+    return mappedRow;
+  });
     
     // Validate data
     const errors = validateFileData(processed);
@@ -243,7 +256,7 @@ const DatosEducativos = () => {
 
     setIsProcessing(true);
     try {
-      // Filter out invalid rows
+     
       const validData = fileData.filter(row => row.escuelaId);
       
       const response = await axios.post('http://localhost:3000/datos-educativos/bulk-upload', {
@@ -269,7 +282,6 @@ const DatosEducativos = () => {
     setUploadProgress(0);
   };
 
-  // Rest of your existing functions...
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -469,7 +481,7 @@ const DatosEducativos = () => {
           <Alert variant="info">
             <strong>Formato requerido:</strong> El archivo debe contener las siguientes columnas:
             <ul className="mb-0 mt-2">
-              <li><strong>escuela</strong> - Nombre de la escuela</li>
+              <li><strong>escuelaID</strong> - Id de la escuela (numero)</li>
               <li><strong>anio</strong> - Año (2000-2100)</li>
               <li><strong>semestre</strong> - 1 o 2</li>
               <li><strong>cantidad_alumnos</strong> - Número de alumnos</li>
