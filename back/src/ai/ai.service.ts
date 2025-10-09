@@ -40,13 +40,12 @@ export class AiService {
       const parametersJson = JSON.stringify(pythonParams);
       
  
-      const command = `python "${scriptPath}" "${parametersJson.replace(/"/g, '\\"')}"`;
+      const command = `python "${scriptPath}" "${parametersJson}"`;
       this.logger.log(`Executing command: ${command}`);
       
       const { stdout, stderr } = await execAsync(command, {
         timeout: 30000,
-        cwd: process.cwd(),
-        shell: 'cmd.exe'
+        cwd: process.cwd()
       });
 
       if (stderr) {
