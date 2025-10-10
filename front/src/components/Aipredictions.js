@@ -55,7 +55,7 @@ const AIPrediction = () => {
   const fetchHistorial = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/predicciones-ia');
+      const response = await axios.get('http://localhost:3003/api/predicciones-ia');
       setHistorial(response.data);
     } catch (err) {
       console.error('Error al cargar el historial:', err);
@@ -80,7 +80,7 @@ const AIPrediction = () => {
     setPredictionResult(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/ai/predict/enrollment', {
+      const response = await axios.post('http://localhost:3003/api/ai/predict/enrollment', {
         cantidad_alumnos: parseFloat(enrollmentData.cantidad_alumnos),
         numero_inscripciones: parseFloat(enrollmentData.numero_inscripciones),
         anio: parseInt(enrollmentData.anio)
@@ -109,7 +109,7 @@ const AIPrediction = () => {
     setPredictionResult(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/ai/predict/dropout', {
+      const response = await axios.post('http://localhost:3003/api/ai/predict/dropout', {
         cantidad_alumnos: parseFloat(dropoutData.cantidad_alumnos),
         numero_inscripciones: parseFloat(dropoutData.numero_inscripciones),
         numero_maestros: parseFloat(dropoutData.numero_maestros),
@@ -134,7 +134,7 @@ const AIPrediction = () => {
 
   const saveToHistory = async (type, inputData, result) => {
     try {
-      await axios.post('http://localhost:3000/api/predicciones-ia', {
+      await axios.post('http://localhost:3003/api/predicciones-ia', {
         parametrosEntrada: { ...inputData, model_type: type },
         resultadoPrediccion: result,
         usuarioId: user?.id
@@ -147,7 +147,7 @@ const AIPrediction = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Está seguro de que desea eliminar este registro?')) {
       try {
-        await axios.delete(`http://localhost:3000/api/predicciones-ia/${id}`);
+        await axios.delete(`http://localhost:3003/api/predicciones-ia/${id}`);
         setSuccess('Registro eliminado exitosamente');
         fetchHistorial();
       } catch (err) {

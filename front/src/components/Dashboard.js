@@ -24,11 +24,11 @@ const Dashboard = () => {
       setLoading(true);
       
   
-      const datosResponse = await axios.get('http://localhost:3000/datos-educativos');
+      const datosResponse = await axios.get('http://localhost:3003/datos-educativos');
       const datos = datosResponse.data;
       
       
-      const escuelasResponse = await axios.get('http://localhost:3000/escuelas');
+      const escuelasResponse = await axios.get('http://localhost:3003/escuelas');
       const escuelas = escuelasResponse.data;
 
       // Calculate statistics

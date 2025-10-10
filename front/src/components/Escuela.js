@@ -58,7 +58,7 @@ const Escuelas = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/escuelas');
+      const response = await axios.get('http://localhost:3003/escuelas');
       setEscuelas(response.data);
     } catch (err) {
       setError('Error al cargar las escuelas');
@@ -69,9 +69,9 @@ const Escuelas = () => {
 
   const fetchRelationships = async () => {
     try {
-      const municipiosResponse = await axios.get('http://localhost:3000/municipios');
+      const municipiosResponse = await axios.get('http://localhost:3003/municipios');
       setMunicipios(municipiosResponse.data);
-      const tiposEscuelaResponse = await axios.get('http://localhost:3000/tipos-escuelas');
+      const tiposEscuelaResponse = await axios.get('http://localhost:3003/tipos-escuelas');
       setTiposEscuela(tiposEscuelaResponse.data);
     } catch (err) {
       console.error('Error al cargar las relaciones:', err);
@@ -217,7 +217,7 @@ const Escuelas = () => {
     try {
       const validData = fileData.filter(row => row.nombre && row.municipioId && row.tipoId);
       
-      const response = await axios.post('http://localhost:3000/escuelas/bulk-upload', { data: validData });
+      const response = await axios.post('http://localhost:3003/escuelas/bulk-upload', { data: validData });
       
       setSuccess(`Se importaron exitosamente ${response.data.imported} registros`);
       handleCloseUploadModal();
@@ -246,10 +246,10 @@ const Escuelas = () => {
 
     try {
       if (editingData) {
-        await axios.patch(`http://localhost:3000/escuelas/${editingData.id}`, formData);
+        await axios.patch(`http://localhost:3003/escuelas/${editingData.id}`, formData);
         setSuccess('Escuela actualizada exitosamente');
       } else {
-        await axios.post('http://localhost:3000/escuelas', formData);
+        await axios.post('http://localhost:3003/escuelas', formData);
         setSuccess('Escuela creada exitosamente');
       }
       
@@ -263,7 +263,7 @@ const Escuelas = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Está seguro de que desea eliminar este registro?')) {
       try {
-        await axios.delete(`http://localhost:3000/escuelas/${id}`);
+        await axios.delete(`http://localhost:3003/escuelas/${id}`);
         setSuccess('Registro eliminado exitosamente');
         fetchData();
       } catch (err) {

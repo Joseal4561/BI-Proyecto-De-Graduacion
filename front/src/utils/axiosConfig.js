@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:3000', // Direct URL for testing
+  baseURL: 'http://localhost:3003', // Direct URL for testing
   timeout: 10000,
 });
 
