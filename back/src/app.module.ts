@@ -22,17 +22,18 @@ import { PrediccionesIaModule } from './ai/predicciones-ia.module';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: () => ({
-        type: 'mysql',
-        host: 'localhost',
-        port: 3309,
-        username: 'root',
-        password: 'root',
-        database: 'db_educacion',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: configService.get<string>('DB_TYPE') as 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mongodb' | 'oracle' | 'mssql',
+        host: configService.get<string>('DB_HOST'),
+        port: parseInt(configService.get<string>('DB_PORT') ?? '3306', 10),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
         entities: [User, Escuela, DatosEducativos, TipoEscuela, Municipio, PrediccionIA],
         synchronize: false, 
       }),
-      inject: [ConfigService],
+     
     }),
     AuthModule,
     DatosEducativosModule,

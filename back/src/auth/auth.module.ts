@@ -14,11 +14,13 @@ import { LocalStrategy } from './local.strategy';
     TypeOrmModule.forFeature([User]),
     PassportModule,
     JwtModule.registerAsync({
-  imports: [ConfigModule],
-  useFactory: async () => ({
-    secret: 'Firefly', 
-    signOptions: { expiresIn: '24h' },
-  }),
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_SECRET'), 
+        signOptions: { 
+          expiresIn: configService.getOrThrow<string>('JWT_EXPIRATION_TIME'), 
+        },
+      }),
       inject: [ConfigService],
     }),
   ],
