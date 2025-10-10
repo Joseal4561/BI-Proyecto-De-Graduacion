@@ -16,6 +16,7 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/axiosConfig';
 
 const Users = () => {
   const { user } = useAuth();
@@ -57,7 +58,7 @@ const Users = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3003/users');
+      const response = await api.get('/users');
       setUsers(response.data);
     } catch (err) {
       setError('Error al cargar los usuarios');
@@ -192,7 +193,7 @@ const Users = () => {
     try {
       const validData = fileData.filter(row => row.username && row.email && row.password);
       
-      const response = await axios.post('http://localhost:3003/users/bulk-upload', { data: validData });
+      const response = await api.post('/users/bulk-upload', { data: validData });
       
       setSuccess(`Se importaron exitosamente ${response.data.imported} registros`);
       handleCloseUploadModal();
@@ -223,10 +224,10 @@ const Users = () => {
 
     try {
       if (editingData) {
-        await axios.patch(`http://localhost:3003/users/${editingData.id}`, payload);
+        await api.patch(`/users/${editingData.id}`, payload);
         setSuccess('Usuario actualizado exitosamente');
       } else {
-        await axios.post('http://localhost:3003/users', payload);
+        await api.post('/users', payload);
         setSuccess('Usuario creado exitosamente');
       }
       
@@ -240,7 +241,7 @@ const Users = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Está seguro de que desea eliminar este registro?')) {
       try {
-        await axios.delete(`http://localhost:3003/users/${id}`);
+        await api.delete(`/users/${id}`);
         setSuccess('Registro eliminado exitosamente');
         fetchData();
       } catch (err) {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import axios from 'axios';
+import api from '../utils/axiosConfig';
 
 export const AuthContext = createContext();
 
@@ -65,18 +66,18 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      const response = await axios.post('http://localhost:3003/auth/login', {
+      const response = await api.post('/auth/login', {
         username,
         password,
       });
 
       const { access_token, user } = response.data;
       
-      // Store in localStorage
+
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(user));
       
-      // Set default authorization header
+
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       dispatch({

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Alert, Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/axiosConfig';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -24,11 +25,11 @@ const Dashboard = () => {
       setLoading(true);
       
   
-      const datosResponse = await axios.get('http://localhost:3003/datos-educativos');
+      const datosResponse = await api.get('/datos-educativos');
       const datos = datosResponse.data;
       
       
-      const escuelasResponse = await axios.get('http://localhost:3003/escuelas');
+      const escuelasResponse = await api.get('/escuelas');
       const escuelas = escuelasResponse.data;
 
       // Calculate statistics

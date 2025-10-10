@@ -17,6 +17,7 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/axiosConfig';
 
 const DatosEducativos = () => {
   const { user } = useAuth();
@@ -61,7 +62,7 @@ const DatosEducativos = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3003/datos-educativos');
+      const response = await api.get('/datos-educativos');;
       setDatos(response.data);
     } catch (err) {
       setError('Error al cargar los datos educativos');
@@ -72,7 +73,7 @@ const DatosEducativos = () => {
 
   const fetchEscuelas = async () => {
     try {
-      const response = await axios.get('http://localhost:3003/escuelas');
+      const response = await api.get('/escuelas');
       setEscuelas(response.data);
     } catch (err) {
       console.error('Error al cargar escuelas:', err);
@@ -259,7 +260,7 @@ const DatosEducativos = () => {
      
       const validData = fileData.filter(row => row.escuelaId);
       
-      const response = await axios.post('http://localhost:3003/datos-educativos/bulk-upload', {
+      const response = await api.post('/datos-educativos/bulk-upload', {
         data: validData
       });
       
@@ -289,10 +290,10 @@ const DatosEducativos = () => {
 
     try {
       if (editingData) {
-        await axios.patch(`http://localhost:3003/datos-educativos/${editingData.id}`, formData);
+        await api.patch(`/datos-educativos/${editingData.id}`, formData);
         setSuccess('Datos actualizados exitosamente');
       } else {
-        await axios.post('http://localhost:3003/datos-educativos', formData);
+        await api.api('/datos-educativos', formData);
         setSuccess('Datos creados exitosamente');
       }
       
@@ -306,7 +307,7 @@ const DatosEducativos = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Está seguro de que desea eliminar este registro?')) {
       try {
-        await axios.delete(`http://localhost:3003/datos-educativos/${id}`);
+        await api.delete(`/datos-educativos/${id}`);
         setSuccess('Registro eliminado exitosamente');
         fetchData();
       } catch (err) {

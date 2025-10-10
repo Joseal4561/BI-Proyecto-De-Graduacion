@@ -4,15 +4,14 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {logger: ['error', 'warn', 'log', 'debug', 'verbose'],});
-  
-  // Enable CORS for frontend
+
   app.enableCors({
-    origin: 'http://localhost:4000', // React app URL
+    origin: 'http://localhost:4000', 
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 
-  // Enable global validation
+
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
@@ -21,7 +20,7 @@ async function bootstrap() {
 
 
 
-  await app.listen(3003);
-  console.log('Backend running on http://localhost:3003');
+  await app.listen(3004);
+  console.log('Backend running on http://localhost:3004');
 }
 bootstrap();

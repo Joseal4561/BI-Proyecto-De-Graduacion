@@ -1,12 +1,10 @@
 import axios from 'axios';
 
-// Create axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:3003', // Direct URL for testing
+  baseURL: import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3004',
   timeout: 10000,
 });
 
-// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -20,7 +18,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle auth errors
 api.interceptors.response.use(
   (response) => {
     return response;

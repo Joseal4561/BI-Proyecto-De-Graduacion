@@ -17,6 +17,7 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/axiosConfig';
 
 const Escuelas = () => {
   const { user } = useAuth();
@@ -58,7 +59,7 @@ const Escuelas = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3003/escuelas');
+      const response = await api.get('/escuelas');
       setEscuelas(response.data);
     } catch (err) {
       setError('Error al cargar las escuelas');
@@ -69,9 +70,9 @@ const Escuelas = () => {
 
   const fetchRelationships = async () => {
     try {
-      const municipiosResponse = await axios.get('http://localhost:3003/municipios');
+      const municipiosResponse = await api.get('/municipios');
       setMunicipios(municipiosResponse.data);
-      const tiposEscuelaResponse = await axios.get('http://localhost:3003/tipos-escuelas');
+      const tiposEscuelaResponse = await api.get('/tipos-escuelas');
       setTiposEscuela(tiposEscuelaResponse.data);
     } catch (err) {
       console.error('Error al cargar las relaciones:', err);
@@ -217,7 +218,7 @@ const Escuelas = () => {
     try {
       const validData = fileData.filter(row => row.nombre && row.municipioId && row.tipoId);
       
-      const response = await axios.post('http://localhost:3003/escuelas/bulk-upload', { data: validData });
+      const response = await api.post('/escuelas/bulk-upload', { data: validData });
       
       setSuccess(`Se importaron exitosamente ${response.data.imported} registros`);
       handleCloseUploadModal();
@@ -246,10 +247,10 @@ const Escuelas = () => {
 
     try {
       if (editingData) {
-        await axios.patch(`http://localhost:3003/escuelas/${editingData.id}`, formData);
+        await api.patch(`/escuelas/${editingData.id}`, formData);
         setSuccess('Escuela actualizada exitosamente');
       } else {
-        await axios.post('http://localhost:3003/escuelas', formData);
+        await api.post('/escuelas', formData);
         setSuccess('Escuela creada exitosamente');
       }
       
@@ -263,7 +264,7 @@ const Escuelas = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Está seguro de que desea eliminar este registro?')) {
       try {
-        await axios.delete(`http://localhost:3003/escuelas/${id}`);
+        await api.delete(`/escuelas/${id}`);
         setSuccess('Registro eliminado exitosamente');
         fetchData();
       } catch (err) {
