@@ -40,7 +40,7 @@ export class AiService {
       const parametersJson = JSON.stringify(pythonParams);
       
  
-      const command = `python "${scriptPath}" "${parametersJson}"`;
+      const command = `python3 "${scriptPath}" "${parametersJson}"`;
       this.logger.log(`Executing command: ${command}`);
       
       const { stdout, stderr } = await execAsync(command, {
