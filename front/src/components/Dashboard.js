@@ -24,22 +24,22 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-  
+      // Fetch educational data
       const datosResponse = await api.get('/datos-educativos');
-      const datos = datosResponse.data;
+      const datos = Array.isArray(datosResponse.data) ? datosResponse.data : [];
       
-      
+      // Fetch schools data
       const escuelasResponse = await api.get('/escuelas');
-      const escuelas = escuelasResponse.data;
+      const escuelas = Array.isArray(escuelasResponse.data) ? escuelasResponse.data : [];
 
       // Calculate statistics
       const totalRegistros = datos.length;
       const totalEscuelas = escuelas.length;
       const promedioAlumnos = datos.length > 0 
-        ? Math.round(datos.reduce((sum, item) => sum + item.cantidadAlumnos, 0) / datos.length)
+        ? Math.round(datos.reduce((sum, item) => sum + (item.cantidadAlumnos || 0), 0) / datos.length)
         : 0;
       const tasaDesercionPromedio = datos.length > 0
-        ? (datos.reduce((sum, item) => sum + parseFloat(item.tasaDesercion), 0) / datos.length).toFixed(2)
+        ? (datos.reduce((sum, item) => sum + (parseFloat(item.tasaDesercion) || 0), 0) / datos.length).toFixed(2)
         : 0;
 
       setStats({
@@ -242,7 +242,7 @@ const Dashboard = () => {
           </Card>
         </Col>
       </Row>
-    </div>
+     </div>
   );
 };
 

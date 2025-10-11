@@ -1,8 +1,15 @@
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL;
+
+console.log('=== AXIOS CONFIG ===');
+console.log('Environment:', process.env.NODE_ENV);
+console.log('API URL from env:', process.env.REACT_APP_API_URL);
+console.log('Final API Base URL:', API_URL);
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3004',
-  timeout: 10000,
+  baseURL: API_URL,
+  timeout: 1000000,
 });
 
 api.interceptors.request.use(

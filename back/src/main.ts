@@ -6,9 +6,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {logger: ['error', 'warn', 'log', 'debug', 'verbose'],});
 
   app.enableCors({
-    origin: 'http://localhost:4000', 
+    origin: [
+        'http://carta.hopitalbarillas.cloud:4000', 
+        'http://localhost:4000',
+        'https://carta.hopitalbarillas.cloud:4000',
+        'http://carta.hopitalbarillas.cloud',  
+        'https://carta.hopitalbarillas.cloud'  
+    ], 
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
 

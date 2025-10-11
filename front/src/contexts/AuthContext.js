@@ -5,7 +5,7 @@ import api from '../utils/axiosConfig';
 export const AuthContext = createContext();
 
 const initialState = {
-  user: null,
+  user: null,  // Change this - don't try to parse here
   token: null,
   isLoading: true,
   isAuthenticated: false,
@@ -47,16 +47,24 @@ export const AuthProvider = ({ children }) => {
     const user = localStorage.getItem('user');
     
     if (token && user) {
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: {
-          access_token: token,
-          user: JSON.parse(user),
-        },
-      });
-      
-      // Set default authorization header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      try {
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: {
+            access_token: token,
+            user: JSON.parse(user),
+          },
+        });
+        
+        // Set default authorization header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (error) {
+        console.error('Error parsing user from localStorage:', error);
+        // Clear corrupted data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
     } else {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -64,6 +72,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
+    	console.log('=== AUTH CONTEXT LOGIN ===');
+        console.log('API Base URL:', api.defaults.baseURL); // Check what URL is being used
+        console.log('Attempting login for:', username);
       dispatch({ type: 'SET_LOADING', payload: true });
       
       const response = await api.post('/auth/login', {
@@ -73,11 +84,9 @@ export const AuthProvider = ({ children }) => {
 
       const { access_token, user } = response.data;
       
-
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(user));
       
-
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       dispatch({
@@ -87,6 +96,11 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
+      console.error('=== LOGIN ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+
       dispatch({ type: 'SET_LOADING', payload: false });
       return {
         success: false,
@@ -121,7 +135,6 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-  
 };
 
 export default AuthContext;
