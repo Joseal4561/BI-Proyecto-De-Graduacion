@@ -10,7 +10,8 @@ import {
   Card,
   Spinner,
   ProgressBar,
-  ListGroup
+  ListGroup,
+  Badge
 } from 'react-bootstrap';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -59,9 +60,13 @@ const Users = () => {
     try {
       setLoading(true);
       const response = await api.get('/users');
-      setUsers(response.data);
+      // Ensure response is an array
+      const usersArray = Array.isArray(response.data) ? response.data : [];
+      setUsers(usersArray);
     } catch (err) {
       setError('Error al cargar los usuarios');
+      console.error('Error fetching users:', err);
+      setUsers([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -155,11 +160,11 @@ const Users = () => {
   const processFileData = (rawData) => {
     const processed = rawData.map((row, index) => {
       const mappedRow = {
-        username: row.username || row.usuario,
-        email: row.email || row.correo,
-        password: row.password || row.contraseña,
+        username: row.username || row.usuario || '',
+        email: row.email || row.correo || '',
+        password: row.password || row.contraseña || '',
         role: row.role || row.rol || 'user',
-        rowIndex: index + 1
+        rowIndex: index + 2
       };
       return mappedRow;
     });
@@ -178,6 +183,9 @@ const Users = () => {
       }
       if (row.password && String(row.password).length < 6) {
         errors.push(`Fila ${row.rowIndex}: La contraseña debe tener al menos 6 caracteres`);
+      }
+      if (row.role && !['admin', 'user'].includes(row.role.toLowerCase())) {
+        errors.push(`Fila ${row.rowIndex}: Rol inválido (debe ser 'admin' o 'user')`);
       }
     });
     return errors;
@@ -214,13 +222,16 @@ const Users = () => {
     setUploadProgress(0);
   };
 
-  // Rest of your existing functions
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     
-    const payload = editingData ? formData : { ...formData, password: formData.password || undefined };
+    // Don't send empty password when editing
+    const payload = { ...formData };
+    if (editingData && !payload.password) {
+      delete payload.password;
+    }
 
     try {
       if (editingData) {
@@ -239,13 +250,13 @@ const Users = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este registro?')) {
+    if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
       try {
         await api.delete(`/users/${id}`);
-        setSuccess('Registro eliminado exitosamente');
+        setSuccess('Usuario eliminado exitosamente');
         fetchData();
       } catch (err) {
-        setError(err.response?.data?.message || 'Error al eliminar el registro');
+        setError(err.response?.data?.message || 'Error al eliminar el usuario');
       }
     }
   };
@@ -303,7 +314,7 @@ const Users = () => {
     <div>
       <Row className="mb-4">
         <Col>
-          <h2>Gestión de Usuarios</h2>
+          <h2>👥 Gestión de Usuarios</h2>
           <p className="text-muted">Gestión de información de usuarios</p>
         </Col>
         <Col xs="auto">
@@ -357,8 +368,12 @@ const Users = () => {
                       <td>{item.id}</td>
                       <td>{item.username}</td>
                       <td>{item.email}</td>
-                      <td>{item.role}</td>
-                      <td>{new Date(item.creadoEn).toLocaleDateString()}</td>
+                      <td>
+                        <Badge bg={item.role === 'admin' ? 'danger' : 'primary'}>
+                          {item.role === 'admin' ? 'Administrador' : 'Usuario'}
+                        </Badge>
+                      </td>
+                      <td>{item.creadoEn ? new Date(item.creadoEn).toLocaleDateString() : 'N/A'}</td>
                       {user?.role === 'admin' && (
                         <td>
                           <Button
@@ -373,6 +388,8 @@ const Users = () => {
                             variant="outline-danger"
                             size="sm"
                             onClick={() => handleDelete(item.id)}
+                            disabled={item.id === user.id}
+                            title={item.id === user.id ? 'No puedes eliminarte a ti mismo' : ''}
                           >
                             🗑️
                           </Button>
@@ -516,15 +533,20 @@ const Users = () => {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Contraseña {editingData ? '(dejar en blanco para no cambiar)' : '*'}</Form.Label>
+              <Form.Label>
+                Contraseña {editingData ? '(dejar en blanco para no cambiar)' : '*'}
+              </Form.Label>
               <Form.Control
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                minLength={editingData ? null : 6}
+                minLength={6}
                 required={!editingData}
               />
+              <Form.Text className="text-muted">
+                Mínimo 6 caracteres
+              </Form.Text>
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Rol *</Form.Label>
@@ -534,8 +556,8 @@ const Users = () => {
                 onChange={handleChange}
                 required
               >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
+                <option value="user">Usuario</option>
+                <option value="admin">Administrador</option>
               </Form.Select>
             </Form.Group>
           </Modal.Body>

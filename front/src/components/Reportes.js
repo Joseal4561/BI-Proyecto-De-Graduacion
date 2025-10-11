@@ -48,7 +48,7 @@ const Reportes = () => {
   
   // Filter states
   const [selectedYear, setSelectedYear] = useState('');
-  const [selectedSemester, setSemesterSelected] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
   const [selectedEscuela, setSelectedEscuela] = useState('');
   const [chartType, setChartType] = useState('students'); // students, desercion, promocion, comparison
 
@@ -70,11 +70,17 @@ const Reportes = () => {
         api.get('/escuelas')
       ]);
       
-      setDatos(datosResponse.data);
-      setEscuelas(escuelasResponse.data);
+      // Ensure responses are arrays
+      const datosArray = Array.isArray(datosResponse.data) ? datosResponse.data : [];
+      const escuelasArray = Array.isArray(escuelasResponse.data) ? escuelasResponse.data : [];
+      
+      setDatos(datosArray);
+      setEscuelas(escuelasArray);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Error al cargar los datos para reportes');
+      setDatos([]);
+      setEscuelas([]);
     } finally {
       setLoading(false);
     }
@@ -100,11 +106,12 @@ const Reportes = () => {
 
   const clearFilters = () => {
     setSelectedYear('');
-    setSemesterSelected('');
+    setSelectedSemester('');
     setSelectedEscuela('');
   };
 
   const getUniqueYears = () => {
+    if (!Array.isArray(datos) || datos.length === 0) return [];
     return [...new Set(datos.map(item => item.anio))].sort((a, b) => b - a);
   };
 
@@ -260,6 +267,7 @@ const Reportes = () => {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
@@ -278,6 +286,7 @@ const Reportes = () => {
 
   const pieChartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
@@ -388,7 +397,7 @@ const Reportes = () => {
                 <Form.Label>Semestre</Form.Label>
                 <Form.Select
                   value={selectedSemester}
-                  onChange={(e) => setSemesterSelected(e.target.value)}
+                  onChange={(e) => setSelectedSemester(e.target.value)}
                 >
                   <option value="">Ambos semestres</option>
                   <option value="1">1° Semestre</option>
@@ -432,7 +441,7 @@ const Reportes = () => {
           <h5 className="mb-0">📈 Tipo de Gráfico</h5>
         </Card.Header>
         <Card.Body>
-          <ButtonGroup className="w-100 mb-3">
+          <ButtonGroup className="w-100 mb-3 flex-wrap">
             <Button 
               variant={chartType === 'students' ? 'primary' : 'outline-primary'}
               onClick={() => setChartType('students')}
@@ -461,7 +470,7 @@ const Reportes = () => {
               variant={chartType === 'urban-rural' ? 'primary' : 'outline-primary'}
               onClick={() => setChartType('urban-rural')}
             >
-              🏘️ Urbano/Rural
+              🏙️ Urbano/Rural
             </Button>
           </ButtonGroup>
         </Card.Body>
@@ -482,7 +491,7 @@ const Reportes = () => {
             <Card.Body className="text-center">
               <h4 className="text-success">
                 {filteredData.length > 0 
-                  ? Math.round(filteredData.reduce((sum, item) => sum + item.cantidadAlumnos, 0) / filteredData.length)
+                  ? Math.round(filteredData.reduce((sum, item) => sum + (item.cantidadAlumnos || 0), 0) / filteredData.length)
                   : 0
                 }
               </h4>
@@ -495,7 +504,7 @@ const Reportes = () => {
             <Card.Body className="text-center">
               <h4 className="text-warning">
                 {filteredData.length > 0 
-                  ? (filteredData.reduce((sum, item) => sum + parseFloat(item.tasaDesercion), 0) / filteredData.length).toFixed(2)
+                  ? (filteredData.reduce((sum, item) => sum + (parseFloat(item.tasaDesercion) || 0), 0) / filteredData.length).toFixed(2)
                   : 0
                 }%
               </h4>
@@ -508,7 +517,7 @@ const Reportes = () => {
             <Card.Body className="text-center">
               <h4 className="text-info">
                 {filteredData.filter(item => item.tasaPromocion).length > 0 
-                  ? (filteredData.filter(item => item.tasaPromocion).reduce((sum, item) => sum + parseFloat(item.tasaPromocion), 0) / filteredData.filter(item => item.tasaPromocion).length).toFixed(2)
+                  ? (filteredData.filter(item => item.tasaPromocion).reduce((sum, item) => sum + (parseFloat(item.tasaPromocion) || 0), 0) / filteredData.filter(item => item.tasaPromocion).length).toFixed(2)
                   : 0
                 }%
               </h4>

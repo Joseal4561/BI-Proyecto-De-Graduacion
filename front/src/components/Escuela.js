@@ -60,9 +60,13 @@ const Escuelas = () => {
     try {
       setLoading(true);
       const response = await api.get('/escuelas');
-      setEscuelas(response.data);
+      // Ensure response is an array
+      const escuelasArray = Array.isArray(response.data) ? response.data : [];
+      setEscuelas(escuelasArray);
     } catch (err) {
       setError('Error al cargar las escuelas');
+      console.error('Error fetching escuelas:', err);
+      setEscuelas([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -71,11 +75,16 @@ const Escuelas = () => {
   const fetchRelationships = async () => {
     try {
       const municipiosResponse = await api.get('/municipios');
-      setMunicipios(municipiosResponse.data);
+      const municipiosArray = Array.isArray(municipiosResponse.data) ? municipiosResponse.data : [];
+      setMunicipios(municipiosArray);
+      
       const tiposEscuelaResponse = await api.get('/tipos-escuelas');
-      setTiposEscuela(tiposEscuelaResponse.data);
+      const tiposArray = Array.isArray(tiposEscuelaResponse.data) ? tiposEscuelaResponse.data : [];
+      setTiposEscuela(tiposArray);
     } catch (err) {
       console.error('Error al cargar las relaciones:', err);
+      setMunicipios([]);
+      setTiposEscuela([]);
     }
   };
 
@@ -167,13 +176,13 @@ const Escuelas = () => {
   const processFileData = (rawData) => {
     const processed = rawData.map((row, index) => {
       const mappedRow = {
-        nombre: row.nombre || row.name,
+        nombre: row.nombre || row.name || '',
         direccion: row.direccion || row.address || '',
         telefono: row.telefono || row.phone || '',
         fecha_Fundacion: row.fecha_Fundacion || row.foundation_date || '',
-        municipioId: findIdByName(municipios, row.municipio || row.municipio_nombre),
-        tipoId: findIdByName(tiposEscuela, row.tipo || row.tipo_nombre),
-        rowIndex: index + 1
+        municipioId: findIdByName(municipios, row.municipio || row.municipio_nombre || ''),
+        tipoId: findIdByName(tiposEscuela, row.tipo || row.tipo_nombre || ''),
+        rowIndex: index + 2
       };
       return mappedRow;
     });
@@ -185,9 +194,11 @@ const Escuelas = () => {
   };
 
   const findIdByName = (list, name) => {
+    if (!name || !Array.isArray(list)) return null;
+    
     const item = list.find(item => 
-      item.nombre.toLowerCase().includes(name.toLowerCase()) ||
-      name.toLowerCase().includes(item.nombre.toLowerCase())
+      item.nombre?.toLowerCase().includes(name.toLowerCase()) ||
+      name.toLowerCase().includes(item.nombre?.toLowerCase())
     );
     return item ? item.id : null;
   };
@@ -239,7 +250,6 @@ const Escuelas = () => {
     setUploadProgress(0);
   };
 
-  // Rest of your existing functions
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -280,8 +290,8 @@ const Escuelas = () => {
       direccion: data.direccion || '',
       telefono: data.telefono || '',
       fecha_Fundacion: data.fecha_Fundacion ? new Date(data.fecha_Fundacion).toISOString().split('T')[0] : '',
-      municipioId: data.municipio.id,
-      tipoId: data.tipo.id
+      municipioId: data.municipio?.id || '',
+      tipoId: data.tipo?.id || ''
     });
     setShowModal(true);
   };
@@ -299,13 +309,13 @@ const Escuelas = () => {
     });
   };
 
-const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     let newValue = value;
 
-
+    // Parse to integer for ID fields
     if (name === 'municipioId' || name === 'tipoId') {
-      newValue = parseInt(value, 10);
+      newValue = value ? parseInt(value, 10) : '';
     }
 
     setFormData(prev => ({
