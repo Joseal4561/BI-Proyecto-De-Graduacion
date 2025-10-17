@@ -29,7 +29,7 @@ export class AiService {
 
   async executePythonScript(parameters: PredictionDto): Promise<any> {
     try {
-      const scriptPath = './src/ai/ai_model.py';
+      const scriptPath = '../src/ai/ai_model.py';
       
       this.logger.log(`Script path: ${scriptPath}`);
       this.logger.log(`Model type: ${parameters.model_type}`);
