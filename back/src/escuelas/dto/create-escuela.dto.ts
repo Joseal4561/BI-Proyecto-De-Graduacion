@@ -1,6 +1,10 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsEnum } from 'class-validator';
 
 export class CreateEscuelaDto {
+  @IsString()
+  @IsOptional()
+  codigoUdi?: string;
+
   @IsString()
   @IsNotEmpty()
   nombre: string;
@@ -24,4 +28,12 @@ export class CreateEscuelaDto {
   @IsNumber()
   @IsNotEmpty()
   tipoId: number;
+
+  @IsEnum(['monolingüe', 'bilingüe'])
+  @IsOptional()
+  modalidad?: 'monolingüe' | 'bilingüe';
+
+  @IsString()
+  @IsOptional()
+  jornada?: string;
 }
