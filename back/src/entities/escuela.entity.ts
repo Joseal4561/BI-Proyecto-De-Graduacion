@@ -1,14 +1,6 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  OneToMany,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { TipoEscuela } from './tipo-escuela.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Municipio } from './municipio.entity';
+import { TipoEscuela } from './tipo-escuela.entity';
 import { DatosEducativos } from './datos-educativos.entity';
 
 @Entity('escuelas')
@@ -16,28 +8,43 @@ export class Escuela {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'varchar', length: 30, nullable: true, name: 'codigo_udi' })
+  codigoUdi: string;
+
   @Column({ type: 'varchar', length: 255 })
   nombre: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  direccion?: string;
+  direccion: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  telefono?: string;
+  telefono: string;
 
-  @Column({ type: 'date', nullable: true })
-  fecha_Fundacion?: Date;
+  @Column({ type: 'date', nullable: true, name: 'fecha_fundacion' })
+  fechaFundacion: Date;
 
-  @ManyToOne(() => TipoEscuela, (tipo) => tipo.escuelas, { onDelete: 'RESTRICT', onUpdate: 'CASCADE' })
+  @Column({ name: 'tipo_id' })
+  tipoId: number;
+
+  @Column({ name: 'municipio_id' })
+  municipioId: number;
+
+  @Column({ type: 'enum', enum: ['monolingüe', 'bilingüe'], nullable: true })
+  modalidad: 'monolingüe' | 'bilingüe';
+
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  jornada: string;
+
+  @CreateDateColumn({ name: 'creado_en' })
+  creadoEn: Date;
+
+  @ManyToOne(() => TipoEscuela)
   @JoinColumn({ name: 'tipo_id' })
   tipo: TipoEscuela;
 
-  @ManyToOne(() => Municipio, (municipio) => municipio.escuelas, { onDelete: 'RESTRICT', onUpdate: 'CASCADE' })
+  @ManyToOne(() => Municipio)
   @JoinColumn({ name: 'municipio_id' })
   municipio: Municipio;
-
-  @CreateDateColumn({ name: 'creado_en', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  creadoEn: Date;
 
   @OneToMany(() => DatosEducativos, datosEducativos => datosEducativos.escuela)
   datosEducativos: DatosEducativos[];

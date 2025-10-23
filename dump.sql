@@ -60,19 +60,23 @@ DROP TABLE IF EXISTS `escuelas`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `escuelas` (
   `id` int NOT NULL AUTO_INCREMENT,
+  `codigo_udi` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `nombre` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `direccion` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `telefono` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `modalidad` enum('monolingüe','bilingüe') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `jornada` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `fecha_fundacion` date DEFAULT NULL,
   `tipo_id` int NOT NULL,
   `municipio_id` int NOT NULL,
   `creado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `u_codigo_udi` (`codigo_udi`),
   KEY `tipo_id` (`tipo_id`),
   KEY `municipio_id` (`municipio_id`),
   CONSTRAINT `escuelas_ibfk_1` FOREIGN KEY (`tipo_id`) REFERENCES `tipos_escuelas` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `escuelas_ibfk_2` FOREIGN KEY (`municipio_id`) REFERENCES `municipios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -81,8 +85,86 @@ CREATE TABLE `escuelas` (
 
 LOCK TABLES `escuelas` WRITE;
 /*!40000 ALTER TABLE `escuelas` DISABLE KEYS */;
-INSERT INTO `escuelas` VALUES (1,'Escuela Primaria San','Calle 1, Zona 2','5551-2345','1985-02-14',1,1,'2025-08-30 00:08:58'),(2,'Instituto Básico La Esperanza','Avenida Central 45','5552-6789','1992-08-20',2,2,'2025-08-30 00:08:58'),(4,'Colegio Americano de Guatemala','pending','111111111','2025-09-01',2,3,'2025-09-22 23:45:52'),(5,'Colegio Internacional de Antigua','2','222222222','2025-09-02',2,1,'2025-09-22 23:46:22'),(6,'Centro Educativo Pavarotti','3','33333333','2025-09-03',5,12,'2025-09-22 23:46:54'),(7,'Academia Cristiana de Guatemala','4','44444444','2025-09-04',1,5,'2025-09-22 23:47:12'),(8,'Colegio Americano del Sur','5','55555555','2025-09-05',8,5,'2025-09-22 23:47:32'),(9,'Colegio Decroly Americano','6','6','2025-09-08',7,10,'2025-09-22 23:47:51'),(10,'Colegio Gibbs','7','777','2025-09-07',8,7,'2025-09-22 23:48:07'),(11,'Colegio Han Al Americano','8','88888888','2025-09-09',7,9,'2025-09-22 23:48:22'),(12,'Colegio Interamericano','9','999','2025-09-06',6,2,'2025-09-22 23:48:43'),(13,'Colegio Internacional SEK-Guatemala','67','65467','2025-09-16',1,9,'2025-09-22 23:49:02'),(14,'Colegio Maya','12464','5632','2025-08-13',4,10,'2025-09-22 23:49:22'),(15,'Colegio Montano','124','1242','2023-08-14',5,13,'2025-09-22 23:59:55'),(16,'Colegio Naleb','62366','4325325','2025-09-10',1,9,'2025-09-23 00:00:08'),(17,'Equity American School','679','7457','2025-09-06',7,34,'2025-09-23 00:00:24'),(18,'Escuela Superior Vocacional Manuel M. Liciaga','231412','547547','2025-09-12',1,30,'2025-09-23 00:00:42'),(19,'Escuela El Porvenir de Niños de Guatemala','6894','4684','2025-09-30',8,27,'2025-09-23 00:01:00'),(20,'Escuela Nuestro Futuro de Niños de Guatemala','867456','32643','2025-09-17',8,27,'2025-09-23 00:01:25'),(21,'Colegio Internacional Panajachel','3562','64647','2025-09-09',5,24,'2025-09-23 00:01:44'),(22,'Universidad Rafael Landívar','47457','2357','2025-07-03',5,26,'2025-09-23 00:02:02'),(23,'The Village School','3467','34734','2025-09-18',5,25,'2025-09-23 00:06:47'),(24,'Universidad del Valle de Guatemala','23535','326236','2025-09-02',4,11,'2025-09-23 00:07:09'),(25,'Universidad Francisco Marroquín','0867','867','2025-08-06',1,12,'2025-09-23 00:07:25'),(26,'Universidad de San Carlos de Guatemala','2145','3464','2025-09-02',6,11,'2025-09-23 00:07:48');
+INSERT INTO `escuelas` VALUES (1,NULL,'Escuela Primaria San','Calle 1, Zona 2','5551-2345',NULL,NULL,'1985-02-14',1,1,'2025-08-30 00:08:58'),(2,NULL,'Instituto Básico La Esperanza','Avenida Central 45','5552-6789',NULL,NULL,'1992-08-20',2,2,'2025-08-30 00:08:58'),(4,NULL,'Colegio Americano de Guatemala','pending','111111111',NULL,NULL,'2025-09-01',2,3,'2025-09-22 23:45:52'),(5,NULL,'Colegio Internacional de Antigua','2','222222222',NULL,NULL,'2025-09-02',2,1,'2025-09-22 23:46:22'),(6,NULL,'Centro Educativo Pavarotti','3','33333333',NULL,NULL,'2025-09-03',5,12,'2025-09-22 23:46:54'),(7,NULL,'Academia Cristiana de Guatemala','4','44444444',NULL,NULL,'2025-09-04',1,5,'2025-09-22 23:47:12'),(8,NULL,'Colegio Americano del Sur','5','55555555',NULL,NULL,'2025-09-05',8,5,'2025-09-22 23:47:32'),(9,NULL,'Colegio Decroly Americano','6','6',NULL,NULL,'2025-09-08',7,10,'2025-09-22 23:47:51'),(10,NULL,'Colegio Gibbs','7','777',NULL,NULL,'2025-09-07',8,7,'2025-09-22 23:48:07'),(11,NULL,'Colegio Han Al Americano','8','88888888',NULL,NULL,'2025-09-09',7,9,'2025-09-22 23:48:22'),(12,NULL,'Colegio Interamericano','9','999',NULL,NULL,'2025-09-06',6,2,'2025-09-22 23:48:43'),(13,NULL,'Colegio Internacional SEK-Guatemala','67','65467',NULL,NULL,'2025-09-16',1,9,'2025-09-22 23:49:02'),(14,NULL,'Colegio Maya','12464','5632',NULL,NULL,'2025-08-13',4,10,'2025-09-22 23:49:22'),(15,NULL,'Colegio Montano','124','1242',NULL,NULL,'2023-08-14',5,13,'2025-09-22 23:59:55'),(16,NULL,'Colegio Naleb','62366','4325325',NULL,NULL,'2025-09-10',1,9,'2025-09-23 00:00:08'),(17,NULL,'Equity American School','679','7457',NULL,NULL,'2025-09-06',7,34,'2025-09-23 00:00:24'),(18,NULL,'Escuela Superior Vocacional Manuel M. Liciaga','231412','547547',NULL,NULL,'2025-09-12',1,30,'2025-09-23 00:00:42'),(19,NULL,'Escuela El Porvenir de Niños de Guatemala','6894','4684',NULL,NULL,'2025-09-30',8,27,'2025-09-23 00:01:00'),(20,NULL,'Escuela Nuestro Futuro de Niños de Guatemala','867456','32643',NULL,NULL,'2025-09-17',8,27,'2025-09-23 00:01:25'),(21,NULL,'Colegio Internacional Panajachel','3562','64647',NULL,NULL,'2025-09-09',5,24,'2025-09-23 00:01:44'),(22,NULL,'Universidad Rafael Landívar','47457','2357',NULL,NULL,'2025-07-03',5,26,'2025-09-23 00:02:02'),(23,NULL,'The Village School','3467','34734',NULL,NULL,'2025-09-18',5,25,'2025-09-23 00:06:47'),(24,NULL,'Universidad del Valle de Guatemala','23535','326236',NULL,NULL,'2025-09-02',4,11,'2025-09-23 00:07:09'),(25,NULL,'Universidad Francisco Marroquín','0867','867',NULL,NULL,'2025-08-06',1,12,'2025-09-23 00:07:25'),(26,NULL,'Universidad de San Carlos de Guatemala','2145','3464',NULL,NULL,'2025-09-02',6,11,'2025-09-23 00:07:48'),(27,NULL,'Dany','Casa de dany','28401204124',NULL,NULL,NULL,1,28,'2025-10-17 02:27:13');
 /*!40000 ALTER TABLE `escuelas` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `infraestructura_escolar`
+--
+
+DROP TABLE IF EXISTS `infraestructura_escolar`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `infraestructura_escolar` (
+  `id_infraestructura` int NOT NULL AUTO_INCREMENT,
+  `escuela_id` int NOT NULL,
+  `modalidad` enum('Monolingüe','Bilingüe') DEFAULT NULL,
+  `area` enum('Urbana','Rural') DEFAULT NULL,
+  `jornada` varchar(50) DEFAULT NULL,
+  `total_aulas_formales` int DEFAULT '0',
+  `techo_lamina` tinyint(1) DEFAULT '0',
+  `techo_losa_fundida` tinyint(1) DEFAULT '0',
+  `paredes_adobe` tinyint(1) DEFAULT '0',
+  `paredes_block` tinyint(1) DEFAULT '0',
+  `tiene_direccion` tinyint(1) DEFAULT '0',
+  `tiene_cocina` tinyint(1) DEFAULT '0',
+  `tiene_bodega` tinyint(1) DEFAULT '0',
+  `sanitarios_lavables` int DEFAULT '0',
+  `sanitarios_letrinas` int DEFAULT '0',
+  `tiene_salon_usos_multiples` tinyint(1) DEFAULT '0',
+  `tiene_laboratorio` tinyint(1) DEFAULT '0',
+  `tiene_muro_perimetral` tinyint(1) DEFAULT '0',
+  `tiene_cancha_polideportiva` tinyint(1) DEFAULT '0',
+  `tiene_cancha_baloncesto` tinyint(1) DEFAULT '0',
+  `tiene_cancha_futbol` tinyint(1) DEFAULT '0',
+  `tiene_piscina` tinyint(1) DEFAULT '0',
+  `circulación_del_predio` tinyint(1) DEFAULT '0',
+  `observaciones_infraestructura` text,
+  `hue_a_mun_km_asfalto` decimal(8,2) DEFAULT NULL,
+  `hue_a_mun_km_terraceria` decimal(8,2) DEFAULT NULL,
+  `mun_a_com_km_asfalto` decimal(8,2) DEFAULT NULL,
+  `mun_a_com_km_terraceria` decimal(8,2) DEFAULT NULL,
+  `com_a_cen_km_asfalto` decimal(8,2) DEFAULT NULL,
+  `mun_a_cen_km_terraceria` decimal(8,2) DEFAULT NULL,
+  `mun_a_cen_km_vereda` decimal(8,2) DEFAULT NULL,
+  `servicio_energia_electrica` tinyint(1) DEFAULT '0',
+  `servicio_agua_potable` tinyint(1) DEFAULT '0',
+  `drenaje_red_municipal` tinyint(1) DEFAULT '0',
+  `drenaje_fosa_septica` tinyint(1) DEFAULT '0',
+  `drenaje_fosa_septica_y_pozo` tinyint(1) DEFAULT '0',
+  `drenaje_desfogue_a_rio` tinyint(1) DEFAULT '0',
+  `certeza_juridica` varchar(100) DEFAULT NULL,
+  `predio_a_nombre_de` varchar(100) DEFAULT NULL,
+  `condicion_edificio` enum('Bueno','Malo') DEFAULT NULL,
+  `daño_a_edificio` text,
+  `es_prioritario` tinyint(1) DEFAULT '0',
+  `observaciones` text,
+  `cuenta_con_perdio` tinyint(1) DEFAULT '0',
+  `programa_de_remozamiento` tinyint(1) DEFAULT '0',
+  `servicio_mas_reciente` varchar(15) DEFAULT NULL,
+  `no_escritorios` int DEFAULT NULL,
+  `no_mesas_hexagonales` int DEFAULT NULL,
+  `no_pizzarras` int DEFAULT NULL,
+  `no_catedras` int DEFAULT NULL,
+  `id_solicitud` int DEFAULT NULL,
+  `coordenadas` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id_infraestructura`),
+  KEY `escuela_id` (`escuela_id`),
+  KEY `id_solicitud` (`id_solicitud`),
+  CONSTRAINT `infraestructura_escolar_ibfk_1` FOREIGN KEY (`escuela_id`) REFERENCES `escuelas` (`id`),
+  CONSTRAINT `infraestructura_escolar_ibfk_2` FOREIGN KEY (`id_solicitud`) REFERENCES `necesidad_mobiliario` (`id_necesidad`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `infraestructura_escolar`
+--
+
+LOCK TABLES `infraestructura_escolar` WRITE;
+/*!40000 ALTER TABLE `infraestructura_escolar` DISABLE KEYS */;
+INSERT INTO `infraestructura_escolar` VALUES (1,7,'Monolingüe','Rural','Matutina',4,1,0,0,1,1,1,0,2,2,0,0,0,1,0,0,0,0,'vieja pero aún funciona',10.00,5.00,10.00,4.00,12.00,4.00,2.00,1,1,1,0,0,0,'Si','Jose','Bueno','Daño de agua en paredes',0,'Firefly',1,1,'2025',10,10,10,10,1,'14, 15');
+/*!40000 ALTER TABLE `infraestructura_escolar` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -108,6 +190,37 @@ LOCK TABLES `municipios` WRITE;
 /*!40000 ALTER TABLE `municipios` DISABLE KEYS */;
 INSERT INTO `municipios` VALUES (3,'Aguacatán'),(1,'Chiantla'),(4,'Colotenango'),(5,'Concepción Huista'),(6,'Cotzal'),(7,'Cuilco'),(2,'Huehuetenango'),(8,'Jacaltenango'),(9,'La Democracia'),(10,'La Libertad'),(11,'Malacatancito'),(12,'Nentón'),(13,'Petatán'),(14,'San Antonio Huista'),(15,'San Gaspar Ixchil'),(16,'San Ildefonso Ixtahuacán'),(17,'San Juan Atitán'),(18,'San Juan Ixcoy'),(19,'San Mateo Ixtatán'),(20,'San Miguel Adentro'),(21,'San Pedro Necta'),(22,'San Pedro Soloma'),(24,'San Rafael la Unión'),(23,'San Rafael Pétzal'),(25,'San Sebastián Coatán'),(26,'San Sebastián Huehuetenango'),(27,'Santa Ana'),(28,'Santa Cruz Barillas'),(29,'Santa Eulalia'),(30,'Santiago Chimaltenango'),(31,'Soloma'),(32,'Tectitán'),(33,'Todos Santos Cuchumatán'),(34,'Unión Cantinil');
 /*!40000 ALTER TABLE `municipios` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `necesidad_mobiliario`
+--
+
+DROP TABLE IF EXISTS `necesidad_mobiliario`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `necesidad_mobiliario` (
+  `id_necesidad` int NOT NULL AUTO_INCREMENT,
+  `escuela_id` int NOT NULL,
+  `necesidad_escritorios` int DEFAULT '0',
+  `necesidad_mesas_hexagonales` int DEFAULT '0',
+  `necesidad_pizarras` int DEFAULT '0',
+  `necesidad_catedras` int DEFAULT '0',
+  `fecha_reporte` date DEFAULT NULL,
+  PRIMARY KEY (`id_necesidad`),
+  KEY `escuela_id` (`escuela_id`),
+  CONSTRAINT `necesidad_mobiliario_ibfk_1` FOREIGN KEY (`escuela_id`) REFERENCES `escuelas` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `necesidad_mobiliario`
+--
+
+LOCK TABLES `necesidad_mobiliario` WRITE;
+/*!40000 ALTER TABLE `necesidad_mobiliario` DISABLE KEYS */;
+INSERT INTO `necesidad_mobiliario` VALUES (1,7,10,5,1,0,NULL);
+/*!40000 ALTER TABLE `necesidad_mobiliario` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -204,4 +317,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-10-09 17:28:02
+-- Dump completed on 2025-10-22 13:22:01

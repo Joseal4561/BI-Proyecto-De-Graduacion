@@ -14,6 +14,10 @@ import { TipoEscuela } from './entities/tipo-escuela.entity';
 import { Municipio } from './entities/municipio.entity';
 import { PrediccionIA } from './entities/ai.entity';
 import { PrediccionesIaModule } from './ai/predicciones-ia.module';
+import { NecesidadMobiliario } from './entities/solicitud.entity';
+import { NecesidadMobiliarioModule } from './solicitudes/necesidad-mobiliario.module';
+import { InfraestructuraEscolar } from './entities/infraestructura.entity';
+import { InfraestructuraEscolarModule } from './infraestructura/infraestructura.module';
 
 @Module({
   imports: [
@@ -30,7 +34,7 @@ import { PrediccionesIaModule } from './ai/predicciones-ia.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Escuela, DatosEducativos, TipoEscuela, Municipio, PrediccionIA],
+        entities: [User, Escuela, DatosEducativos, TipoEscuela, Municipio, PrediccionIA, NecesidadMobiliario, InfraestructuraEscolar],
         synchronize: false, 
       }),
      
@@ -41,7 +45,9 @@ import { PrediccionesIaModule } from './ai/predicciones-ia.module';
     UserModule,
     TipoEscuelaModule,
     MunicipioModule,
-    PrediccionesIaModule
+    PrediccionesIaModule,
+    NecesidadMobiliarioModule,
+    InfraestructuraEscolarModule,
   ],
 })
 export class AppModule {}
