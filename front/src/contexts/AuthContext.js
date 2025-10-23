@@ -56,11 +56,11 @@ export const AuthProvider = ({ children }) => {
           },
         });
         
-        // Set default authorization header
+    
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } catch (error) {
         console.error('Error parsing user from localStorage:', error);
-        // Clear corrupted data
+       
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
     	console.log('=== AUTH CONTEXT LOGIN ===');
-        console.log('API Base URL:', api.defaults.baseURL); // Check what URL is being used
+        console.log('API Base URL:', api.defaults.baseURL); 
         console.log('Attempting login for:', username);
       dispatch({ type: 'SET_LOADING', payload: true });
       

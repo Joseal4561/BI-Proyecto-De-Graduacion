@@ -9,6 +9,9 @@ import Reportes from './components/Reportes';
 import Escuelas from './components/Escuela';
 import Users from './components/Users';
 import AIPrediction from './components/Aipredictions';
+import Solicitudes from './components/Solicitudes';
+import InfraestructuraEscolar from './components/InfraestructuraEscolar';
+import DashboardInfraestructura from './components/DashboardInfraestructura';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -122,6 +125,36 @@ function AppContent() {
           <ProtectedRoute>
             <Layout>
               <AIPrediction />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/solicitudes-mobiliario" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Solicitudes />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/infraestructura-escolar" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <InfraestructuraEscolar />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/Dash-infra" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <DashboardInfraestructura />
             </Layout>
           </ProtectedRoute>
         } 

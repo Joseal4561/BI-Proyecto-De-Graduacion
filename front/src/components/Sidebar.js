@@ -43,6 +43,24 @@ const Sidebar = () => {
       label: 'Predicciones IA',
       icon: '🤖',
       roles: ['admin', 'user']
+    },
+    {
+      path: '/solicitudes-mobiliario',
+      label: 'Solicitudes Mobiliario',
+      icon: '🪑',
+      roles: ['admin', 'user']
+    },
+    {
+      path: '/infraestructura-escolar',
+      label: 'Infraestructura Escolar',
+      icon: '🏗️',
+      roles: ['admin', 'user']
+    },
+    {
+      path: '/Dash-infra',
+      label: 'Dashboard Infraestructura',
+      icon: '🏢',
+      roles: ['admin', 'user']
     }
   ];
 
