@@ -41,6 +41,6 @@ export class DatosEducativos {
   creadoEn: Date;
 
   @ManyToOne(() => Escuela, escuela => escuela.datosEducativos)
-  @JoinColumn({ name: 'id' })
+  @JoinColumn({ name: 'escuela_id' })
   escuela: Escuela;
 }
