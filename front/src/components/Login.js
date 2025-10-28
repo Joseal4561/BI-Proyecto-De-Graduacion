@@ -35,7 +35,9 @@ const Login = () => {
           <Card className="shadow">
             <Card.Body className="p-5">
               <div className="text-center mb-4">
-                <h3 className="text-primary">Sistema BI Educación</h3>
+                <h3 className="text-primary">DIDEDUC</h3>
+                <p className="text-muted">Sistema de control de datos</p>
+                <p className="text-muted">de infraestructura y solicitudes de mobiliario</p>
                 <p className="text-muted">Iniciar Sesión</p>
               </div>
 
@@ -81,8 +83,7 @@ const Login = () => {
               <div className="mt-4 text-center">
                 <small className="text-muted">
                   Usuarios de prueba:<br />
-                  Admin: admin / admin123<br />
-                  Usuario: usuario1 / user123
+                  Admin: admin3 / admin3 <br />
                 </small>
               </div>
             </Card.Body>

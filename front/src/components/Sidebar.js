@@ -72,7 +72,7 @@ const Sidebar = () => {
     <div className="bg-dark text-white vh-100 position-fixed" style={{ width: '250px', top: 0, left: 0, zIndex: 1000 }}>
       <div className="p-3 border-bottom border-secondary">
         <Navbar.Brand className="text-white">
-          <strong>BI Educación</strong>
+          <strong>DIDEDUC</strong>
         </Navbar.Brand>
         <small className="d-block text-muted">
           {user?.username} ({user?.role})
