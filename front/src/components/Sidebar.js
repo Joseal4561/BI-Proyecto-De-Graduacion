@@ -8,28 +8,11 @@ const Sidebar = () => {
   const location = useLocation();
 
   const menuItems = [
-    {
-      path: '/dashboard',
-      label: 'Dashboard',
-      icon: '📊',
-      roles: ['admin', 'user']
-    },
-    {
-      path: '/datos-educativos',
-      label: 'Datos Educativos',
-      icon: '📚',
-      roles: ['admin', 'user']
-    },
+
     {
       path: '/escuelas',
       label: 'Escuelas',
       icon: '🏫',
-      roles: ['admin', 'user']
-    },
-    {
-      path: '/reportes',
-      label: 'Reportes',
-      icon: '📈',
       roles: ['admin', 'user']
     },
     {
@@ -61,6 +44,12 @@ const Sidebar = () => {
       label: 'Dashboard Infraestructura',
       icon: '🏢',
       roles: ['admin', 'user']
+    },
+    {
+      path: '/reportes-infraestructura',
+      label: 'Reportes Infraestructura',
+      icon: '📊',
+      roles: ['admin']
     }
   ];
 

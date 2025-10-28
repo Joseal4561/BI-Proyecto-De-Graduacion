@@ -12,6 +12,7 @@ import AIPrediction from './components/Aipredictions';
 import Solicitudes from './components/Solicitudes';
 import InfraestructuraEscolar from './components/InfraestructuraEscolar';
 import DashboardInfraestructura from './components/DashboardInfraestructura';
+import ReportesInfraestructura from './components/Reportesinfraestructura';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -46,7 +47,7 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+  return isAuthenticated ? <Navigate to="/Dash-infra" replace /> : children;
 };
 
 
@@ -159,9 +160,19 @@ function AppContent() {
           </ProtectedRoute>
         } 
       />
+      <Route 
+        path="/reportes-infraestructura" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ReportesInfraestructura />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
       
       {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/Dash-infra" replace />} />
       
       {/* 404 Route */}
       <Route 
