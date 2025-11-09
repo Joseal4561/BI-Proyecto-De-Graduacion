@@ -11,13 +11,13 @@ import {
   Spinner,
   Badge,
   Container,
-  ButtonGroup
+  ProgressBar
 } from 'react-bootstrap';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext'; 
 import api from '../utils/axiosConfig';
 
-const AIPrediction = () => {
+const FurniturePrediction = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,27 +25,13 @@ const AIPrediction = () => {
   const [historial, setHistorial] = useState([]);
   
   const [showModal, setShowModal] = useState(false);
-  const [modelType, setModelType] = useState(''); 
-  
-
-  const [enrollmentData, setEnrollmentData] = useState({
-    cantidad_alumnos: '',
-    numero_inscripciones: '',
-    anio: new Date().getFullYear(),
-    descripcion: ''
-  });
-
- 
-  const [dropoutData, setDropoutData] = useState({
-    cantidad_alumnos: '',
-    numero_inscripciones: '',
-    numero_maestros: '',
-    promedio_calificaciones: '',
-    es_urbana: true,
-    descripcion: ''
-  });
-
   const [predictionResult, setPredictionResult] = useState(null);
+
+  const [formData, setFormData] = useState({
+    escuela_id: '',
+    periods_ahead: 6,
+    descripcion: ''
+  });
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -57,7 +43,11 @@ const AIPrediction = () => {
     try {
       setLoading(true);
       const response = await api.get('/api/predicciones-ia');
-      setHistorial(response.data);
+      // Filter only furniture predictions
+      const furnitureData = response.data.filter(
+        item => item.parametrosEntrada?.model_type === 'furniture'
+      );
+      setHistorial(furnitureData);
     } catch (err) {
       console.error('Error al cargar el historial:', err);
     } finally {
@@ -65,15 +55,14 @@ const AIPrediction = () => {
     }
   };
 
-  const handleOpenModal = (type) => {
-    setModelType(type);
+  const handleOpenModal = () => {
     setShowModal(true);
     setPredictionResult(null);
     setError('');
     setSuccess('');
   };
 
-  const handleSubmitEnrollment = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -81,62 +70,31 @@ const AIPrediction = () => {
     setPredictionResult(null);
 
     try {
-      const response = await api.post('/api/ai/predict/enrollment', {
-        cantidad_alumnos: parseFloat(enrollmentData.cantidad_alumnos),
-        numero_inscripciones: parseFloat(enrollmentData.numero_inscripciones),
-        anio: parseInt(enrollmentData.anio)
+      const response = await api.post('/api/ai/predict/furniture', {
+        escuela_id: parseInt(formData.escuela_id),
+        periods_ahead: parseInt(formData.periods_ahead)
       });
 
+      // Response structure: { success: true, data: { status, prediction_data, ... }, model_type, timestamp }
       setPredictionResult(response.data);
-      setSuccess('Predicción de inscripciones realizada exitosamente');
+      setSuccess('Predicción de necesidades de mobiliario realizada exitosamente');
       
-   
+      // Save to history if admin
       if (user?.role === 'admin') {
-        await saveToHistory('enrollment', enrollmentData, response.data);
+        await saveToHistory(formData, response.data);
         fetchHistorial();
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al realizar la predicción de inscripciones');
+      setError(err.response?.data?.message || 'Error al realizar la predicción de mobiliario');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmitDropout = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
-    setPredictionResult(null);
-
-    try {
-      const response = await api.post('/api/ai/predict/dropout', {
-        cantidad_alumnos: parseFloat(dropoutData.cantidad_alumnos),
-        numero_inscripciones: parseFloat(dropoutData.numero_inscripciones),
-        numero_maestros: parseFloat(dropoutData.numero_maestros),
-        promedio_calificaciones: parseFloat(dropoutData.promedio_calificaciones),
-        es_urbana: dropoutData.es_urbana
-      });
-
-      setPredictionResult(response.data);
-      setSuccess('Predicción de riesgo de deserción realizada exitosamente');
-      
-    
-      if (user?.role === 'admin') {
-        await saveToHistory('dropout', dropoutData, response.data);
-        fetchHistorial();
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Error al realizar la predicción de deserción');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveToHistory = async (type, inputData, result) => {
+  const saveToHistory = async (inputData, result) => {
     try {
       await api.post('/api/predicciones-ia', {
-        parametrosEntrada: { ...inputData, model_type: type },
+        parametrosEntrada: { ...inputData, model_type: 'furniture' },
         resultadoPrediccion: result,
         usuarioId: user?.id
       });
@@ -159,19 +117,9 @@ const AIPrediction = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setModelType('');
-    setEnrollmentData({
-      cantidad_alumnos: '',
-      numero_inscripciones: '',
-      anio: new Date().getFullYear(),
-      descripcion: ''
-    });
-    setDropoutData({
-      cantidad_alumnos: '',
-      numero_inscripciones: '',
-      numero_maestros: '',
-      promedio_calificaciones: '',
-      es_urbana: true,
+    setFormData({
+      escuela_id: '',
+      periods_ahead: 6,
       descripcion: ''
     });
     setPredictionResult(null);
@@ -179,287 +127,197 @@ const AIPrediction = () => {
     setSuccess('');
   };
 
-  const handleEnrollmentChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setEnrollmentData(prev => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
-  const handleDropoutChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setDropoutData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const getFurnitureLabel = (type) => {
+    const labels = {
+      'necesidad_catedras': 'Cátedras',
+      'necesidad_escritorios': 'Escritorios',
+      'necesidad_mesas_exagonales': 'Mesas Hexagonales',
+      'necesidad_pizzaras': 'Pizarras'
+    };
+    return labels[type] || type;
   };
 
-  const formatEnrollmentResult = (result) => {
-  if (!result?.data?.prediction_data) return null;
-  
-  const { prediction_data } = result.data;
-  
- 
-  if (prediction_data.error) {
-    return (
-      <Card className="mt-3">
-        <Card.Header className="bg-danger text-white">
-          <h6 className="mb-0"> Error en Predicción ARIMA</h6>
-        </Card.Header>
-        <Card.Body>
-          <Alert variant="danger">
-            <strong>Error:</strong> {prediction_data.error}
-            <br />
-            <small>Por favor, verifique que los modelos estén entrenados correctamente.</small>
-          </Alert>
-        </Card.Body>
-      </Card>
-    );
-  }
-  
-  const { predictions, confidence, trend_analysis } = prediction_data;
-  
-  
-  if (!predictions || !trend_analysis) {
-    return (
-      <Card className="mt-3">
-        <Card.Header className="bg-warning text-white">
-          <h6 className="mb-0"> Datos Incompletos</h6>
-        </Card.Header>
-        <Card.Body>
-          <Alert variant="warning">
-            La predicción se completó pero faltan algunos datos. Por favor, intente nuevamente.
-          </Alert>
-        </Card.Body>
-      </Card>
-    );
-  }
-  
-  return (
-    <Card className="mt-3">
-      <Card.Header className="bg-primary text-white">
-        <h6 className="mb-0"> Predicción de Inscripciones (ARIMA)</h6>
-      </Card.Header>
-      <Card.Body>
-        <Row className="mb-3">
-          <Col md={6}>
-            <strong>Confianza del Modelo:</strong>
-            <Badge bg="info" className="ms-2">
-              {(confidence * 100).toFixed(2)}%
-            </Badge>
-          </Col>
-          <Col md={6}>
-            <strong>Tasa de Crecimiento:</strong>
-            <Badge bg={trend_analysis.growth_rate > 0 ? 'success' : 'warning'} className="ms-2">
-              {trend_analysis.growth_rate}%
-            </Badge>
-          </Col>
-        </Row>
-        
-        <Row>
-          <Col md={6}>
-            <Card className="mb-2">
-              <Card.Header className="bg-light">
-                <strong>Próximo Semestre</strong>
-              </Card.Header>
-              <Card.Body>
-                <p className="mb-1">
-                  <strong>Estudiantes:</strong> {predictions.next_semester?.cantidad_alumnos || 'N/A'}
-                </p>
-                <p className="mb-0">
-                  <strong>Inscripciones:</strong> {predictions.next_semester?.numero_inscripciones || 'N/A'}
-                </p>
-                {predictions.next_semester?.confidence_interval && (
-                  <small className="text-muted">
-                    Rango: {predictions.next_semester.confidence_interval.students_lower} - {predictions.next_semester.confidence_interval.students_upper}
-                  </small>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col md={6}>
-            <Card className="mb-2">
-              <Card.Header className="bg-light">
-                <strong>Próximo Año</strong>
-              </Card.Header>
-              <Card.Body>
-                <p className="mb-1">
-                  <strong>Estudiantes:</strong> {predictions.next_year?.cantidad_alumnos || 'N/A'}
-                </p>
-                <p className="mb-0">
-                  <strong>Inscripciones:</strong> {predictions.next_year?.numero_inscripciones || 'N/A'}
-                </p>
-                {predictions.next_year?.confidence_interval && (
-                  <small className="text-muted">
-                    Rango: {predictions.next_year.confidence_interval.students_lower} - {predictions.next_year.confidence_interval.students_upper}
-                  </small>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-        
-        <Alert variant="info" className="mt-3">
-          <strong>Análisis de Tendencia:</strong><br />
-          El modelo predice un crecimiento del {trend_analysis.growth_rate}% 
-          {trend_analysis.seasonal_adjustment !== undefined && 
-            ` con ajuste estacional del ${trend_analysis.seasonal_adjustment}%.`
-          }
-          <br />
-          <small className="text-muted">
-            Tendencia: {trend_analysis.trend_direction || 'estable'}
-          </small>
-        </Alert>
-      </Card.Body>
-    </Card>
-  );
-};
-
-  const formatDropoutResult = (result) => {
+  const formatPredictionResult = (result) => {
+    // Controller returns: { success: true, data: { status, prediction_data, ... }, model_type, timestamp }
+    // We need to access result.data.prediction_data
     if (!result?.data?.prediction_data) return null;
     
     const { prediction_data } = result.data;
-    const { risk_level, risk_color, risk_score, estimated_dropout_rate, confidence, risk_factors, feature_analysis } = prediction_data;
     
+    if (prediction_data.error) {
+      return (
+        <Card className="mt-3">
+          <Card.Header className="bg-danger text-white">
+            <h6 className="mb-0">❌ Error en Predicción</h6>
+          </Card.Header>
+          <Card.Body>
+            <Alert variant="danger">
+              <strong>Error:</strong> {prediction_data.error}
+              <br />
+              <small>Por favor, verifique que los modelos estén entrenados correctamente.</small>
+            </Alert>
+          </Card.Body>
+        </Card>
+      );
+    }
+
+    const { predictions_by_furniture_type, overall_confidence, summary } = prediction_data;
+
     return (
-      <Card className="mt-3">
-        <Card.Header className={`bg-${risk_color} text-white`}>
-          <h6 className="mb-0">⚠️ Predicción de Riesgo de Deserción</h6>
-        </Card.Header>
-        <Card.Body>
-          <Row className="mb-3">
-            <Col md={4}>
-              <strong>Nivel de Riesgo:</strong>
-              <Badge bg={risk_color} className="ms-2 fs-6">
-                {risk_level}
-              </Badge>
-            </Col>
-            <Col md={4}>
-              <strong>Tasa Estimada:</strong>
-              <Badge bg="secondary" className="ms-2">
-                {estimated_dropout_rate}%
-              </Badge>
-            </Col>
-            <Col md={4}>
-              <strong>Confianza:</strong>
-              <Badge bg="info" className="ms-2">
-                {(confidence * 100).toFixed(2)}%
-              </Badge>
-            </Col>
-          </Row>
-          
-          {risk_factors.length > 0 && (
+      <div className="mt-3">
+        {/* Overall Summary Card */}
+        <Card className="mb-3">
+          <Card.Header className="bg-primary text-white">
+            <h6 className="mb-0">📊 Resumen de Predicción</h6>
+          </Card.Header>
+          <Card.Body>
             <Row className="mb-3">
-              <Col xs={12}>
-                <strong>Factores de Riesgo Identificados:</strong>
-                <ul className="mt-2">
-                  {risk_factors.map((factor, index) => (
-                    <li key={index}>{factor}</li>
-                  ))}
-                </ul>
+              <Col md={6}>
+                <strong>Escuela ID:</strong> {prediction_data.escuela_id}
+              </Col>
+              <Col md={6}>
+                <strong>Períodos Predichos:</strong> {prediction_data.periods_predicted} meses
               </Col>
             </Row>
-          )}
-          
-          <Row>
-            <Col xs={12}>
-              <strong>Análisis de Características:</strong>
-              <div className="mt-2">
+            <Row>
+              <Col md={12}>
+                <strong>Confianza General:</strong>
+                <ProgressBar 
+                  now={overall_confidence * 100} 
+                  label={`${(overall_confidence * 100).toFixed(1)}%`}
+                  variant={overall_confidence > 0.8 ? 'success' : overall_confidence > 0.6 ? 'warning' : 'danger'}
+                  className="mt-2"
+                />
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+
+        {/* Next Month Summary */}
+        <Card className="mb-3">
+          <Card.Header className="bg-info text-white">
+            <h6 className="mb-0">📅 Próximo Mes</h6>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              {Object.entries(summary.next_month || {}).map(([type, value]) => (
+                <Col md={6} key={type} className="mb-2">
+                  <strong>{getFurnitureLabel(type)}:</strong> {value} unidades
+                </Col>
+              ))}
+            </Row>
+          </Card.Body>
+        </Card>
+
+        {/* Detailed Predictions by Furniture Type */}
+        {Object.entries(predictions_by_furniture_type).map(([furnitureType, predData]) => {
+          if (predData.error) {
+            return (
+              <Alert key={furnitureType} variant="warning" className="mb-3">
+                <strong>{getFurnitureLabel(furnitureType)}:</strong> {predData.error}
+              </Alert>
+            );
+          }
+
+          const { predictions, confidence, trend_analysis, model_info } = predData;
+
+          return (
+            <Card key={furnitureType} className="mb-3">
+              <Card.Header className="bg-light">
                 <Row>
-                  <Col md={6}>
-                    <small>
-                      <strong>Ratio Estudiante-Maestro:</strong> {feature_analysis.student_teacher_ratio}
-                    </small>
+                  <Col md={8}>
+                    <h6 className="mb-0">{getFurnitureLabel(furnitureType)}</h6>
                   </Col>
-                  <Col md={6}>
-                    <small>
-                      <strong>Tasa de Inscripción:</strong> {(feature_analysis.enrollment_rate * 100).toFixed(1)}%
-                    </small>
+                  <Col md={4} className="text-end">
+                    <Badge bg="info">
+                      Confianza: {(confidence * 100).toFixed(1)}%
+                    </Badge>
                   </Col>
                 </Row>
-                <Row className="mt-1">
-                  <Col md={6}>
-                    <small>
-                      <strong>Categoría de Calificaciones:</strong> {feature_analysis.grade_category}
-                    </small>
-                  </Col>
-                  <Col md={6}>
-                    <small>
-                      <strong>Tamaño de Escuela:</strong> {feature_analysis.school_size_category}
-                    </small>
-                  </Col>
-                </Row>
-              </div>
-            </Col>
-          </Row>
-          
-          <Alert variant={risk_color === 'danger' ? 'danger' : risk_color === 'warning' ? 'warning' : 'success'} className="mt-3">
-            <strong>Recomendación:</strong><br />
-            {risk_level === 'ALTO' && 'Se requiere intervención inmediata. Considere programas de apoyo estudiantil y seguimiento individualizado.'}
-            {risk_level === 'MEDIO' && 'Monitoreo requerido. Implemente estrategias preventivas y apoyo académico adicional.'}
-            {risk_level === 'BAJO' && 'Situación favorable. Mantenga las prácticas actuales y monitoreo rutinario.'}
-          </Alert>
-        </Card.Body>
-      </Card>
+              </Card.Header>
+              <Card.Body>
+                {/* Trend Analysis */}
+                <Alert 
+                  variant={trend_analysis.growth_rate > 0 ? 'warning' : 'success'} 
+                  className="mb-3"
+                >
+                  <strong>Tendencia:</strong> {trend_analysis.trend_direction === 'increasing' ? '📈 Aumento' : trend_analysis.trend_direction === 'decreasing' ? '📉 Disminución' : '➡️ Estable'}
+                  {' '}({trend_analysis.growth_rate > 0 ? '+' : ''}{trend_analysis.growth_rate.toFixed(2)}%)
+                  <br />
+                  <small>
+                    Promedio predicho: {trend_analysis.average_predicted} unidades/mes | 
+                    Total: {trend_analysis.total_predicted} unidades
+                  </small>
+                </Alert>
+
+                {/* Predictions Table */}
+                <div className="table-responsive">
+                  <Table striped bordered hover size="sm">
+                    <thead>
+                      <tr>
+                        <th>Período</th>
+                        <th>Predicción</th>
+                        <th>Rango de Confianza</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {predictions.slice(0, 6).map((pred) => (
+                        <tr key={pred.period}>
+                          <td>Mes {pred.period}</td>
+                          <td><strong>{pred.predicted_value}</strong> unidades</td>
+                          <td>
+                            <small>
+                              {pred.confidence_interval.lower} - {pred.confidence_interval.upper}
+                            </small>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+
+                {/* Model Info */}
+                <div className="mt-2">
+                  <small className="text-muted">
+                    Modelo ARIMA {model_info.order} | 
+                    AIC: {typeof model_info.aic === 'number' ? model_info.aic.toFixed(2) : model_info.aic} | 
+                    Promedio histórico: {model_info.historical_avg}
+                  </small>
+                </div>
+              </Card.Body>
+            </Card>
+          );
+        })}
+      </div>
     );
-  };
-
-  const getModelTypeFromHistorial = (item) => {
-    return item.parametrosEntrada?.model_type || 'legacy';
-  };
-
-  const formatHistorialResult = (item) => {
-    const modelType = getModelTypeFromHistorial(item);
-    const result = item.resultadoPrediccion?.data;
-    
-    if (!result) return 'N/A';
-    
-    if (modelType === 'enrollment') {
-      const predictions = result.prediction_data?.predictions;
-      return predictions ? 
-        `Próx. Sem: ${predictions.next_semester?.cantidad_alumnos || 'N/A'} est.` : 
-        'N/A';
-    } else if (modelType === 'dropout') {
-      const riskLevel = result.prediction_data?.risk_level;
-      const estimatedRate = result.prediction_data?.estimated_dropout_rate;
-      return riskLevel ? 
-        `${riskLevel} (${estimatedRate}%)` : 
-        'N/A';
-    }
-    
-    return result.prediction || 'N/A';
   };
 
   return (
     <Container fluid>
       <Row className="mb-4">
         <Col>
-          <h2>Predicción con Inteligencia Artificial</h2>
-          <p className="text-muted">Análisis predictivo basado en datos educativos</p>
+          <h2>🪑 Predicción de Necesidades de Mobiliario</h2>
+          <p className="text-muted">Predicción basada en ARIMA para planificación de recursos</p>
         </Col>
         <Col xs="auto">
-          <ButtonGroup>
-            <Button
-              variant="primary"
-              onClick={() => handleOpenModal('enrollment')}
-            >
-              📈 Predicción de Inscripciones
-            </Button>
-            <Button
-              variant="warning"
-              onClick={() => handleOpenModal('dropout')}
-            >
-              ⚠️ Riesgo de Deserción
-            </Button>
-          </ButtonGroup>
+          <Button variant="primary" onClick={handleOpenModal}>
+            📊 Nueva Predicción
+          </Button>
         </Col>
       </Row>
 
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-   
+      {/* History Table */}
       {user?.role === 'admin' && (
         <Card className="mb-4">
           <Card.Header>
@@ -481,64 +339,41 @@ const AIPrediction = () => {
                   <thead className="bg-light">
                     <tr>
                       <th>Fecha</th>
-                      <th>Modelo</th>
+                      <th>Escuela ID</th>
+                      <th>Períodos</th>
                       <th>Descripción</th>
-                      <th>Parámetros</th>
-                      <th>Resultado</th>
                       <th>Confianza</th>
                       <th>Usuario</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {historial.map((item) => {
-                      const modelType = getModelTypeFromHistorial(item);
-                      return (
-                        <tr key={item.id}>
-                          <td>{new Date(item.creadoEn).toLocaleDateString()}</td>
-                          <td>
-                            <Badge bg={modelType === 'enrollment' ? 'primary' : modelType === 'dropout' ? 'warning' : 'secondary'}>
-                              {modelType === 'enrollment' ? 'Inscripciones' : 
-                               modelType === 'dropout' ? 'Deserción' : 'Legacy'}
-                            </Badge>
-                          </td>
-                          <td>{item.parametrosEntrada?.descripcion || 'Sin descripción'}</td>
-                          <td>
-                            <small>
-                              {modelType === 'enrollment' ? 
-                                `A:${item.parametrosEntrada?.cantidad_alumnos}, I:${item.parametrosEntrada?.numero_inscripciones}` :
-                                modelType === 'dropout' ?
-                                `A:${item.parametrosEntrada?.cantidad_alumnos}, M:${item.parametrosEntrada?.numero_maestros}, G:${item.parametrosEntrada?.promedio_calificaciones}` :
-                                `A:${item.parametrosEntrada?.cantidadAlumnos || item.parametrosEntrada?.cantidad_alumnos}`
-                              }
-                            </small>
-                          </td>
-                          <td>
-                            <small>{formatHistorialResult(item)}</small>
-                          </td>
-                          <td>
-                            <Badge bg="info">
-                              {item.resultadoPrediccion?.data?.prediction_data?.confidence ? 
-                                `${(item.resultadoPrediccion.data.prediction_data.confidence * 100).toFixed(1)}%` :
-                                item.resultadoPrediccion?.data?.confidence ? 
-                                `${(item.resultadoPrediccion.data.confidence * 100).toFixed(1)}%` : 
-                                'N/A'
-                              }
-                            </Badge>
-                          </td>
-                          <td>{item.usuario?.username || 'N/A'}</td>
-                          <td>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => handleDelete(item.id)}
-                            >
-                              🗑️
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {historial.map((item) => (
+                      <tr key={item.id}>
+                        <td>{new Date(item.creadoEn).toLocaleDateString()}</td>
+                        <td>{item.parametrosEntrada?.escuela_id || 'N/A'}</td>
+                        <td>{item.parametrosEntrada?.periods_ahead || 6} meses</td>
+                        <td>{item.parametrosEntrada?.descripcion || 'Sin descripción'}</td>
+                        <td>
+                          <Badge bg="info">
+                            {item.resultadoPrediccion?.data?.prediction_data?.overall_confidence ? 
+                              `${(item.resultadoPrediccion.data.prediction_data.overall_confidence * 100).toFixed(1)}%` : 
+                              'N/A'
+                            }
+                          </Badge>
+                        </td>
+                        <td>{item.usuario?.username || 'N/A'}</td>
+                        <td>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            🗑️
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </Table>
               </div>
@@ -548,219 +383,81 @@ const AIPrediction = () => {
       )}
 
       {/* Prediction Modal */}
-      <Modal show={showModal} onHide={handleCloseModal} size="lg">
+      <Modal show={showModal} onHide={handleCloseModal} size="xl">
         <Modal.Header closeButton>
-          <Modal.Title>
-            {modelType === 'enrollment' ? ' Predicción de Inscripciones (ARIMA)' : 
-             modelType === 'dropout' ? ' Predicción de Riesgo de Deserción' : 
-             'Realizar Predicción IA'}
-          </Modal.Title>
+          <Modal.Title>📊 Predicción de Necesidades de Mobiliario</Modal.Title>
         </Modal.Header>
-        <Form onSubmit={modelType === 'enrollment' ? handleSubmitEnrollment : handleSubmitDropout}>
+        <Form onSubmit={handleSubmit}>
           <Modal.Body>
-            {modelType === 'enrollment' && (
-              <>
-                <Alert variant="info">
-                  <strong> Modelo ARIMA:</strong><br />
-                  Este modelo utiliza análisis de series temporales para predecir el número de estudiantes e inscripciones 
-                  en futuros períodos basándose en tendencias históricas.
-                </Alert>
+            <Alert variant="info">
+              <strong>ℹ️ Modelo ARIMA:</strong><br />
+              Este modelo analiza tendencias históricas de necesidades de mobiliario para predecir 
+              requerimientos futuros en cátedras, escritorios, mesas hexagonales y pizarras.
+            </Alert>
 
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Cantidad de Alumnos Actual *</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="cantidad_alumnos"
-                        value={enrollmentData.cantidad_alumnos}
-                        onChange={handleEnrollmentChange}
-                        placeholder="Ej: 250"
-                        min="1"
-                        required
-                      />
-                      <Form.Text className="text-muted">
-                        Número total de estudiantes actualmente
-                      </Form.Text>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Número de Inscripciones Actual *</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="numero_inscripciones"
-                        value={enrollmentData.numero_inscripciones}
-                        onChange={handleEnrollmentChange}
-                        placeholder="Ej: 230"
-                        min="0"
-                        required
-                      />
-                      <Form.Text className="text-muted">
-                        Total de inscripciones registradas
-                      </Form.Text>
-                    </Form.Group>
-                  </Col>
-                </Row>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>ID de Escuela *</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="escuela_id"
+                    value={formData.escuela_id}
+                    onChange={handleChange}
+                    placeholder="Ej: 34"
+                    min="1"
+                    required
+                  />
+                  <Form.Text className="text-muted">
+                    Identificador de la escuela para contexto
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Períodos a Predecir (meses) *</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="periods_ahead"
+                    value={formData.periods_ahead}
+                    onChange={handleChange}
+                    placeholder="Ej: 6"
+                    min="1"
+                    max="24"
+                    required
+                  />
+                  <Form.Text className="text-muted">
+                    Número de meses futuros (1-24)
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+            </Row>
 
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Año de Referencia *</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="anio"
-                        value={enrollmentData.anio}
-                        onChange={handleEnrollmentChange}
-                        min="2020"
-                        max="2030"
-                        required
-                      />
-                      <Form.Text className="text-muted">
-                        Año base para la predicción
-                      </Form.Text>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Descripción (Opcional)</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={2}
-                        name="descripcion"
-                        value={enrollmentData.descripcion}
-                        onChange={handleEnrollmentChange}
-                        placeholder="Descripción del contexto..."
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-              </>
-            )}
+            <Row>
+              <Col md={12}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Descripción (Opcional)</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={2}
+                    name="descripcion"
+                    value={formData.descripcion}
+                    onChange={handleChange}
+                    placeholder="Contexto adicional sobre la predicción..."
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-            {modelType === 'dropout' && (
-              <>
-                <Alert variant="warning">
-                  <strong>⚠️ Modelo de Árbol de Decisión:</strong><br />
-                  Este modelo evalúa múltiples factores educativos para determinar el riesgo de deserción 
-                  y proporciona recomendaciones específicas.
-                </Alert>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Cantidad de Alumnos *</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="cantidad_alumnos"
-                        value={dropoutData.cantidad_alumnos}
-                        onChange={handleDropoutChange}
-                        placeholder="Ej: 180"
-                        min="1"
-                        required
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Número de Inscripciones *</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="numero_inscripciones"
-                        value={dropoutData.numero_inscripciones}
-                        onChange={handleDropoutChange}
-                        placeholder="Ej: 170"
-                        min="0"
-                        required
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Número de Maestros *</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="numero_maestros"
-                        value={dropoutData.numero_maestros}
-                        onChange={handleDropoutChange}
-                        placeholder="Ej: 12"
-                        min="1"
-                        required
-                      />
-                      <Form.Text className="text-muted">
-                        Total de docentes activos
-                      </Form.Text>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Promedio de Calificaciones *</Form.Label>
-                      <Form.Control
-                        type="number"
-                        step="0.1"
-                        name="promedio_calificaciones"
-                        value={dropoutData.promedio_calificaciones}
-                        onChange={handleDropoutChange}
-                        placeholder="Ej: 7.8"
-                        min="0"
-                        max="10"
-                        required
-                      />
-                      <Form.Text className="text-muted">
-                        Promedio general de calificaciones (0-10)
-                      </Form.Text>
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Check
-                        type="checkbox"
-                        name="es_urbana"
-                        checked={dropoutData.es_urbana}
-                        onChange={handleDropoutChange}
-                        label="Escuela ubicada en zona urbana"
-                      />
-                      <Form.Text className="text-muted">
-                        Marque si la escuela está en zona urbana (vs. rural)
-                      </Form.Text>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Descripción (Opcional)</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={2}
-                        name="descripcion"
-                        value={dropoutData.descripcion}
-                        onChange={handleDropoutChange}
-                        placeholder="Contexto adicional..."
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-              </>
-            )}
-
-            
-            {predictionResult && (
-              modelType === 'enrollment' ? 
-                formatEnrollmentResult(predictionResult) : 
-                formatDropoutResult(predictionResult)
-            )}
+            {/* Results */}
+            {predictionResult && formatPredictionResult(predictionResult)}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleCloseModal}>
               Cancelar
             </Button>
             <Button 
-              variant={modelType === 'enrollment' ? 'primary' : 'warning'} 
+              variant="primary" 
               type="submit"
               disabled={loading}
             >
@@ -770,9 +467,7 @@ const AIPrediction = () => {
                   Procesando...
                 </>
               ) : (
-                <>
-                  {modelType === 'enrollment' ? ' Predecir Inscripciones' : ' Evaluar Riesgo'}
-                </>
+                '📊 Generar Predicción'
               )}
             </Button>
           </Modal.Footer>
@@ -782,4 +477,4 @@ const AIPrediction = () => {
   );
 };
 
-export default AIPrediction;
+export default FurniturePrediction;

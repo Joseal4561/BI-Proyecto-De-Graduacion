@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { PrediccionesIaService } from './predicciones-ia.service';
 import { AiService, PredictionDto } from './ai.service';
+import { FurnitureAiService, FurniturePredictionDto } from './furniture-ai.service';
 import { SavePrediccionDto } from './dto/create-prediccion.dto';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -8,7 +9,8 @@ import { AuthGuard } from '@nestjs/passport';
 export class PrediccionesIaController {
   constructor(
     private readonly prediccionesIaService: PrediccionesIaService,
-    private readonly aiService: AiService
+    private readonly aiService: AiService,
+    private readonly furnitureAiService: FurnitureAiService
   ) {}
 
   @Post('ai/predict/enrollment')
@@ -56,6 +58,27 @@ export class PrediccionesIaController {
       };
     } catch (error) {
       throw new Error(`Error en predicción de deserción: ${error.message}`);
+    }
+  }
+
+  @Post('ai/predict/furniture')
+  async makePredictionFurniture(@Body() predictionDto: any) {
+    try {
+      const parameters: FurniturePredictionDto = {
+        escuela_id: predictionDto.escuela_id,
+        periods_ahead: predictionDto.periods_ahead || 6
+      };
+
+      const result = await this.furnitureAiService.predictFurnitureNeeds(parameters);
+      
+      return {
+        success: true,
+        data: result,
+        model_type: 'furniture',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(`Error en predicción de mobiliario: ${error.message}`);
     }
   }
 

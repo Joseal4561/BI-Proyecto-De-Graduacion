@@ -43,12 +43,15 @@ const Escuelas = () => {
   
   // Form state
   const [formData, setFormData] = useState({
-    nombre: '',
-    direccion: '',
-    telefono: '',
-    fecha_Fundacion: '',
-    municipioId: '',
-    tipoId: ''
+     codigoUdi: '',
+     nombre: '',
+     direccion: '',
+     telefono: '',
+     fechaFundacion: '',
+     municipioId: '',
+     tipoId: '',
+     modalidad: '',
+     jornada: ''
   });
 
   useEffect(() => {
@@ -176,12 +179,15 @@ const Escuelas = () => {
   const processFileData = (rawData) => {
     const processed = rawData.map((row, index) => {
       const mappedRow = {
+        codigoUdi: row.codigoUdi || row.codigo_udi || '',
         nombre: row.nombre || row.name || '',
         direccion: row.direccion || row.address || '',
         telefono: row.telefono || row.phone || '',
         fecha_Fundacion: row.fecha_Fundacion || row.foundation_date || '',
         municipioId: findIdByName(municipios, row.municipio || row.municipio_nombre || ''),
         tipoId: findIdByName(tiposEscuela, row.tipo || row.tipo_nombre || ''),
+        modalidad: row.modalidad || '',
+        jornada: row.jornada || '',
         rowIndex: index + 2
       };
       return mappedRow;
@@ -192,6 +198,58 @@ const Escuelas = () => {
     
     return processed;
   };
+
+  const handleExportToExcel = async () => {
+  try {
+    setLoading(true);
+    
+
+    const dataToExport = escuelas.map(escuela => ({
+      'Código UDI': escuela.codigoUdi || 'N/A',
+      'Nombre': escuela.nombre,
+      'Dirección': escuela.direccion || 'N/A',
+      'Teléfono': escuela.telefono || 'N/A',
+      'Fecha de Fundación': escuela.fecha_Fundacion 
+        ? new Date(escuela.fecha_Fundacion).toLocaleDateString() 
+        : 'N/A',
+      'Municipio': escuela.municipio?.nombre || 'N/A',
+      'Tipo': escuela.tipo?.nombre || 'N/A',
+      'Modalidad': escuela.modalidad || 'N/A',
+      'Jornada': escuela.jornada || 'N/A',
+    }));
+
+   
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Escuelas');
+
+
+    const maxWidth = 50;
+    const columnWidths = Object.keys(dataToExport[0] || {}).map(key => ({
+      wch: Math.min(
+        Math.max(
+          key.length,
+          ...dataToExport.map(row => String(row[key]).length)
+        ),
+        maxWidth
+      )
+    }));
+    worksheet['!cols'] = columnWidths;
+
+  
+    const now = new Date();
+    const filename = `escuelas_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
+
+ 
+    XLSX.writeFile(workbook, filename);
+    
+    setSuccess('Archivo Excel descargado exitosamente');
+  } catch (error) {
+    setError('Error al exportar los datos: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const findIdByName = (list, name) => {
     if (!name || !Array.isArray(list)) return null;
@@ -286,12 +344,15 @@ const Escuelas = () => {
   const handleEdit = (data) => {
     setEditingData(data);
     setFormData({
+      codigoUdi: data.codigoUdi || '',
       nombre: data.nombre,
       direccion: data.direccion || '',
       telefono: data.telefono || '',
       fecha_Fundacion: data.fecha_Fundacion ? new Date(data.fecha_Fundacion).toISOString().split('T')[0] : '',
       municipioId: data.municipio?.id || '',
-      tipoId: data.tipo?.id || ''
+      tipoId: data.tipo?.id || '',
+      modalidad: data.modalidad || '',
+      jornada: data.jornada || ''
     });
     setShowModal(true);
   };
@@ -300,12 +361,15 @@ const Escuelas = () => {
     setShowModal(false);
     setEditingData(null);
     setFormData({
+      codigoUdi: '',
       nombre: '',
       direccion: '',
       telefono: '',
-      fecha_Fundacion: '',
+      fechaFundacion: '',
       municipioId: '',
-      tipoId: ''
+      tipoId: '',
+      modalidad: '',
+      jornada: ''
     });
   };
 
@@ -355,6 +419,13 @@ const Escuelas = () => {
               >
                 ➕ Nueva Escuela
               </Button>
+              <Button
+               variant="info"
+               onClick={handleExportToExcel}
+               disabled={escuelas.length === 0}
+              >
+                📥 Exportar a Excel
+              </Button>
             </div>
           )}
         </Col>
@@ -377,10 +448,14 @@ const Escuelas = () => {
               <Table striped hover className="mb-0">
                 <thead className="bg-light">
                   <tr>
+                    <th>Código UDI</th>
                     <th>Nombre</th>
                     <th>Dirección</th>
+                    <th>Teléfono</th>
                     <th>Municipio</th>
                     <th>Tipo</th>
+                    <th>Modalidad</th>
+                    <th>Jornada</th>
                     <th>Fundada</th>
                     {user?.role === 'admin' && <th>Acciones</th>}
                   </tr>
@@ -388,11 +463,15 @@ const Escuelas = () => {
                 <tbody>
                   {escuelas.map((item) => (
                     <tr key={item.id}>
+                      <td>{item.codigoUdi || 'N/A'}</td>
                       <td>{item.nombre}</td>
                       <td>{item.direccion || 'N/A'}</td>
+                      <td>{item.telefono || 'N/A'}</td>
                       <td>{item.municipio?.nombre || 'N/A'}</td>
                       <td>{item.tipo?.nombre || 'N/A'}</td>
-                      <td>{item.fecha_Fundacion ? new Date(item.fecha_Fundacion).toLocaleDateString() : 'N/A'}</td>
+                      <td>{item.modalidad || 'N/A'}</td>
+                      <td>{item.jornada || 'N/A'}</td>
+                      <td>{item.fechaFundacion ? new Date(item.fechaFundacion).toLocaleDateString() : 'N/A'}</td>
                       {user?.role === 'admin' && (
                         <td>
                           <Button
@@ -430,12 +509,15 @@ const Escuelas = () => {
           <Alert variant="info">
             <strong>Formato requerido:</strong> El archivo debe contener las siguientes columnas:
             <ul className="mb-0 mt-2">
+              <li><strong>codigoUdi</strong> - Código UDI (opcional)</li>
               <li><strong>nombre</strong> - Nombre de la escuela</li>
               <li><strong>direccion</strong> - Dirección (opcional)</li>
               <li><strong>telefono</strong> - Teléfono (opcional)</li>
               <li><strong>fecha_Fundacion</strong> - Fecha de fundación (opcional)</li>
               <li><strong>municipio</strong> - Nombre del municipio</li>
               <li><strong>tipo</strong> - Nombre del tipo de escuela</li>
+              <li><strong>modalidad</strong> - Modalidad (opcional)</li>
+              <li><strong>jornada</strong> - Jornada (opcional)</li>
             </ul>
           </Alert>
           
@@ -479,23 +561,29 @@ const Escuelas = () => {
                 <Table striped bordered size="sm">
                   <thead>
                     <tr>
+                      <th>Código UDI</th>
                       <th>Nombre</th>
                       <th>Dirección</th>
                       <th>Teléfono</th>
-                      <th>Fundación</th>
                       <th>Municipio</th>
                       <th>Tipo</th>
+                      <th>Modalidad</th>
+                      <th>Jornada</th>
+                      <th>Fundada</th>
                     </tr>
                   </thead>
                   <tbody>
                     {previewData.map((row, index) => (
                       <tr key={index}>
+                        <td>{row.codigoUdi || 'N/A'}</td>
                         <td>{row.nombre}</td>
                         <td>{row.direccion || 'N/A'}</td>
                         <td>{row.telefono || 'N/A'}</td>
                         <td>{row.fecha_Fundacion || 'N/A'}</td>
                         <td>{municipios.find(m => m.id === row.municipioId)?.nombre || 'NO ENCONTRADO'}</td>
                         <td>{tiposEscuela.find(t => t.id === row.tipoId)?.nombre || 'NO ENCONTRADO'}</td>
+                        <td>{row.modalidad || 'N/A'}</td>
+                        <td>{row.jornada || 'N/A'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -605,6 +693,28 @@ const Escuelas = () => {
                   </option>
                 ))}
               </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Modalidad</Form.Label>
+              <Form.Select
+                name="modalidad"
+                value={formData.modalidad}
+                onChange={handleChange}
+              >
+                <option value="">Seleccione una modalidad</option>
+                <option value="monolingüe">Monolingüe</option>
+                <option value="bilingüe">Bilingüe</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Jornada</Form.Label>
+              <Form.Control
+                type="text"
+                name="jornada"
+                value={formData.jornada}
+                onChange={handleChange}
+                maxLength={30}
+              />
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>

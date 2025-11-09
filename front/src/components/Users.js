@@ -291,6 +291,49 @@ const Users = () => {
     }));
   };
 
+  const handleExportToExcel = async () => {
+  try {
+    setLoading(true);
+    
+    const dataToExport = users.map(usuario => ({
+      'ID': usuario.id,
+      'Nombre de Usuario': usuario.username,
+      'Email': usuario.email,
+      'Rol': usuario.role === 'admin' ? 'Administrador' : 'Usuario',
+      'Creado En': usuario.creadoEn 
+        ? new Date(usuario.creadoEn).toLocaleDateString() 
+        : 'N/A'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
+
+    const maxWidth = 50;
+    const columnWidths = Object.keys(dataToExport[0] || {}).map(key => ({
+      wch: Math.min(
+        Math.max(
+          key.length,
+          ...dataToExport.map(row => String(row[key]).length)
+        ),
+        maxWidth
+      )
+    }));
+    worksheet['!cols'] = columnWidths;
+
+    const now = new Date();
+    const filename = `usuarios_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
+    
+    setSuccess('Archivo Excel descargado exitosamente');
+  } catch (error) {
+    setError('Error al exportar los datos: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
   if (!user || user.role !== 'admin') {
     return (
       <div className="text-center p-5">
@@ -331,6 +374,13 @@ const Users = () => {
                 onClick={() => setShowModal(true)}
               >
                 ➕ Nuevo Usuario
+              </Button>
+              <Button
+                variant="info"
+                onClick={handleExportToExcel}
+                disabled={users.length === 0}
+              >
+                Exportar a Excel
               </Button>
             </div>
           )}

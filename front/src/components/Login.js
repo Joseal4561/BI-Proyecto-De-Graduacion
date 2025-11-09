@@ -80,12 +80,7 @@ const Login = () => {
                 </Button>
               </Form>
 
-              <div className="mt-4 text-center">
-                <small className="text-muted">
-                  Usuarios de prueba:<br />
-                  Admin: admin3 / admin3 <br />
-                </small>
-              </div>
+            
             </Card.Body>
           </Card>
         </Col>

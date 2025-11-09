@@ -331,6 +331,51 @@ const Solicitudes = () => {
            (item.necesidadCatedras || 0);
   };
 
+  const handleExportToExcel = async () => {
+  try {
+    setLoading(true);
+    
+    const dataToExport = necesidades.map(necesidad => ({
+      'Escuela': necesidad.escuela?.nombre || 'N/A',
+      'Escritorios': necesidad.necesidadEscritorios || 0,
+      'Mesas Hexagonales': necesidad.necesidadMesasHexagonales || 0,
+      'Pizarras': necesidad.necesidadPizarras || 0,
+      'Cátedras': necesidad.necesidadCatedras || 0,
+      'Total': getTotalNecesidad(necesidad),
+      'Fecha Reporte': necesidad.fechaReporte 
+        ? new Date(necesidad.fechaReporte).toLocaleDateString() 
+        : 'N/A'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Necesidades Mobiliario');
+
+    const maxWidth = 50;
+    const columnWidths = Object.keys(dataToExport[0] || {}).map(key => ({
+      wch: Math.min(
+        Math.max(
+          key.length,
+          ...dataToExport.map(row => String(row[key]).length)
+        ),
+        maxWidth
+      )
+    }));
+    worksheet['!cols'] = columnWidths;
+
+    const now = new Date();
+    const filename = `necesidades_mobiliario_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
+    
+    setSuccess('Archivo Excel descargado exitosamente');
+  } catch (error) {
+    setError('Error al exportar los datos: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
   if (loading) {
     return (
       <div className="text-center p-5">
@@ -361,6 +406,13 @@ const Solicitudes = () => {
                 onClick={() => setShowModal(true)}
               >
                 ➕ Nueva Necesidad
+              </Button>
+              <Button
+                variant="info"
+                onClick={handleExportToExcel}
+                disabled={necesidades.length === 0}
+              >
+                Exportar a Excel
               </Button>
             </div>
           )}

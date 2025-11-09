@@ -2,6 +2,8 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, On
 import { Municipio } from './municipio.entity';
 import { TipoEscuela } from './tipo-escuela.entity';
 import { DatosEducativos } from './datos-educativos.entity';
+import { InfraestructuraEscolar } from './infraestructura.entity';
+import { NecesidadMobiliario } from './solicitud.entity';
 
 @Entity('escuelas')
 export class Escuela {
@@ -48,4 +50,10 @@ export class Escuela {
 
   @OneToMany(() => DatosEducativos, datosEducativos => datosEducativos.escuela)
   datosEducativos: DatosEducativos[];
+
+  @OneToMany(() => InfraestructuraEscolar, infraestructuraescolar => infraestructuraescolar.escuela)
+  infraestructuraescolar: InfraestructuraEscolar[];
+
+  @OneToMany(() => NecesidadMobiliario, necesidadMobiliario => necesidadMobiliario.escuela)
+  necesidadMobiliario: NecesidadMobiliario[];
 }

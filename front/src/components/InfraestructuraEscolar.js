@@ -553,6 +553,84 @@ const InfraestructuraEscolar = () => {
     }));
   };
 
+  const handleExportToExcel = async () => {
+  try {
+    setLoading(true);
+    
+    const dataToExport = infraestructuras.map(infra => ({
+      'Escuela': infra.escuela?.nombre || 'N/A',
+      'Modalidad': infra.modalidad || 'N/A',
+      'Área': infra.area || 'N/A',
+      'Jornada': infra.jornada || 'N/A',
+      'Coordenadas': infra.coordenadas || 'N/A',
+      'Total Aulas': infra.totalAulasFormales || 0,
+      'Techo Lámina': infra.techoLamina ? 'Sí' : 'No',
+      'Techo Losa Fundida': infra.techoLosaFundida ? 'Sí' : 'No',
+      'Paredes Adobe': infra.paredesAdobe ? 'Sí' : 'No',
+      'Paredes Block': infra.paredesBlock ? 'Sí' : 'No',
+      'Tiene Dirección': infra.tieneDireccion ? 'Sí' : 'No',
+      'Tiene Cocina': infra.tieneCocina ? 'Sí' : 'No',
+      'Tiene Bodega': infra.tieneBodega ? 'Sí' : 'No',
+      'Sanitarios Lavables': infra.sanitariosLavables || 0,
+      'Sanitarios Letrinas': infra.sanitariosLetrinas || 0,
+      'Salón Usos Múltiples': infra.tieneSalonUsosMultiples ? 'Sí' : 'No',
+      'Tiene Laboratorio': infra.tieneLaboratorio ? 'Sí' : 'No',
+      'Muro Perimetral': infra.tieneMuroPerimetral ? 'Sí' : 'No',
+      'Cancha Polideportiva': infra.tieneCanchaPolideportiva ? 'Sí' : 'No',
+      'Cancha Baloncesto': infra.tieneCanchaBaloncesto ? 'Sí' : 'No',
+      'Cancha Fútbol': infra.tieneCanchaFutbol ? 'Sí' : 'No',
+      'Tiene Piscina': infra.tienePiscina ? 'Sí' : 'No',
+      'Circulación Predio': infra.circulacionDelPredio ? 'Sí' : 'No',
+      'Energía Eléctrica': infra.servicioEnergiaElectrica ? 'Sí' : 'No',
+      'Agua Potable': infra.servicioAguaPotable ? 'Sí' : 'No',
+      'Drenaje Municipal': infra.drenajeRedMunicipal ? 'Sí' : 'No',
+      'Fosa Séptica': infra.drenajeFosaSeptica ? 'Sí' : 'No',
+      'Fosa Séptica y Pozo': infra.drenajeFosaSepticaYPozo ? 'Sí' : 'No',
+      'Desfogue a Río': infra.drenajeDesfogueARio ? 'Sí' : 'No',
+      'Servicio Más Reciente': infra.servicioMasReciente || 'N/A',
+      'Certeza Jurídica': infra.certezaJuridica || 'N/A',
+      'Predio a Nombre De': infra.predioANombreDe || 'N/A',
+      'Condición Edificio': infra.condicionEdificio || 'N/A',
+      'Cuenta con Predio': infra.cuentaConPredio ? 'Sí' : 'No',
+      'Es Prioritario': infra.esPrioritario ? 'Sí' : 'No',
+      'Programa Remozamiento': infra.programaDeRemozamiento ? 'Sí' : 'No',
+      'Escritorios': infra.noEscritorios || 0,
+      'Mesas Hexagonales': infra.noMesasHexagonales || 0,
+      'Pizarras': infra.noPizarras || 0,
+      'Cátedras': infra.noCatedras || 0,
+      'Observaciones Infraestructura': infra.observacionesInfraestructura || 'N/A',
+      'Observaciones Generales': infra.observaciones || 'N/A'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Infraestructura');
+
+    const maxWidth = 50;
+    const columnWidths = Object.keys(dataToExport[0] || {}).map(key => ({
+      wch: Math.min(
+        Math.max(
+          key.length,
+          ...dataToExport.map(row => String(row[key]).length)
+        ),
+        maxWidth
+      )
+    }));
+    worksheet['!cols'] = columnWidths;
+
+    const now = new Date();
+    const filename = `infraestructura_escolar_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
+    
+    setSuccess('Archivo Excel descargado exitosamente');
+  } catch (error) {
+    setError('Error al exportar los datos: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
   if (loading) {
     return (
       <div className="text-center p-5">
@@ -583,6 +661,13 @@ const InfraestructuraEscolar = () => {
                 onClick={() => setShowModal(true)}
               >
                 ➕ Nueva Infraestructura
+              </Button>
+              <Button
+                variant="info"
+                onClick={handleExportToExcel}
+                disabled={infraestructuras.length === 0}
+              >
+                Exportar a Excel
               </Button>
             </div>
           )}
