@@ -389,11 +389,8 @@ const FurniturePrediction = () => {
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
-            <Alert variant="info">
-              <strong>ℹ️ Modelo ARIMA:</strong><br />
-              Este modelo analiza tendencias históricas de necesidades de mobiliario para predecir 
-              requerimientos futuros en cátedras, escritorios, mesas hexagonales y pizarras.
-            </Alert>
+            
+              
 
             <Row>
               <Col md={6}>

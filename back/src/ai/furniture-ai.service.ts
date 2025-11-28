@@ -15,8 +15,9 @@ export class FurnitureAiService {
 
   async predictFurnitureNeeds(parameters: FurniturePredictionDto): Promise<any> {
     try {
-      const scriptPath = './src/ai/Carta/furniture_prediction.py';
-      
+      const scriptPath = '/var/www/projects/carta/back/Aimodels/Carta/furniture_prediction.py';
+      const VENV_PYTHON_EXECUTABLE = '/var/www/projects/carta/back/Aimodels/Carta/bin/python3';
+
       this.logger.log(`Script path: ${scriptPath}`);
       this.logger.log(`Predicting furniture needs for school: ${parameters.escuela_id}`);
       
@@ -34,8 +35,8 @@ export class FurnitureAiService {
       
       // Execute Python script with properly escaped JSON
       const command = process.platform === 'win32'
-        ? `python "${scriptPath}" "${escapedJson}"`
-        : `python '${scriptPath}' '${parametersJson}'`;
+        ? `python3 "${scriptPath}" "${escapedJson}"`
+        : `${VENV_PYTHON_EXECUTABLE} '${scriptPath}' '${parametersJson}'`;
       
       this.logger.log(`Executing command: ${command}`);
       
