@@ -1,3 +1,4 @@
+// file: Users.js
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -19,9 +20,15 @@ import Papa from 'papaparse';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/axiosConfig';
 
+// Definición de Rangos
+const RANKS = ['Director', 'Coordinador', 'Administrador'];
+
 const Users = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
+  const [userRanks, setUserRanks] = useState([]);
+  const [escuelas, setEscuelas] = useState([]);
+  const [municipios, setMunicipios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -39,7 +46,7 @@ const Users = () => {
   const [validationErrors, setValidationErrors] = useState([]);
   const [previewData, setPreviewData] = useState([]);
   
-  // Form state
+  // Form state for User Core Data
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -47,32 +54,243 @@ const Users = () => {
     role: 'user'
   });
 
+  // Form state for User Rank Data
+  const [rankFormData, setRankFormData] = useState({
+    userRankId: null,
+    rank: '',
+    escuelaId: '',
+    municipioId: '',
+  });
+
   useEffect(() => {
     if (user?.role === 'admin') {
-      fetchData();
+      Promise.all([
+        fetchData(), 
+        fetchEscuelasAndMunicipios(),
+        fetchUserRanks()
+      ]).finally(() => setLoading(false));
     } else {
       setLoading(false);
       setError('Acceso denegado. Solo los administradores pueden gestionar usuarios.');
     }
   }, [user]);
+  
+  const fetchEscuelasAndMunicipios = async () => {
+    try {
+      const [escuelasRes, municipiosRes] = await Promise.all([
+        api.get('/escuelas'),
+        api.get('/municipios')
+      ]);
+
+      setEscuelas(Array.isArray(escuelasRes.data) ? escuelasRes.data : []);
+      setMunicipios(Array.isArray(municipiosRes.data) ? municipiosRes.data : []);
+    } catch (err) {
+      setError('Error al cargar Escuelas o Municipios para la asignación de rangos.');
+      console.error('Error fetching support data:', err);
+    }
+  };
+
+  const fetchUserRanks = async () => {
+    try {
+      const response = await api.get('/user-ranks');
+      setUserRanks(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      console.error('Error fetching user ranks:', err);
+      setUserRanks([]);
+    }
+  };
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/users');
-      // Ensure response is an array
-      const usersArray = Array.isArray(response.data) ? response.data : [];
-      setUsers(usersArray);
+      const [usersResponse, ranksResponse] = await Promise.all([
+        api.get('/users'),
+        api.get('/user-ranks')
+      ]);
+
+      const usersArray = Array.isArray(usersResponse.data) ? usersResponse.data : [];
+      const ranksArray = Array.isArray(ranksResponse.data) ? ranksResponse.data : [];
+
+      const usersWithRanks = usersArray.map(u => {
+        const rankData = ranksArray.find(r => r.userId === u.id);
+        return {
+          ...u,
+          rankData: rankData || null 
+        };
+      });
+
+      setUsers(usersWithRanks);
+      setUserRanks(ranksArray);
     } catch (err) {
-      setError('Error al cargar los usuarios');
+      setError('Error al cargar los usuarios o sus rangos');
       console.error('Error fetching users:', err);
-      setUsers([]); // Set empty array on error
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // File handling functions
+  const handleEdit = (data) => {
+    setEditingData(data);
+    
+    setFormData({
+      username: data.username,
+      email: data.email,
+      role: data.role,
+      password: ''
+    });
+
+    if (data.rankData) {
+      setRankFormData({
+        userRankId: data.rankData.id,
+        rank: data.rankData.rank || '',
+        escuelaId: data.rankData.escuelaId || '',
+        municipioId: data.rankData.municipioId || '',
+      });
+    } else {
+      setRankFormData({
+        userRankId: null,
+        rank: '',
+        escuelaId: '',
+        municipioId: '',
+      });
+    }
+
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingData(null);
+    setFormData({
+      username: '',
+      email: '',
+      password: '',
+      role: 'user'
+    });
+    setRankFormData({
+      userRankId: null,
+      rank: '',
+      escuelaId: '',
+      municipioId: '',
+    });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleRankChange = (e) => {
+    const { name, value } = e.target;
+    let newRankData = { ...rankFormData, [name]: value };
+
+    if (name === 'rank') {
+      newRankData.escuelaId = '';
+      newRankData.municipioId = '';
+    }
+    
+    setRankFormData(newRankData);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    
+    // Prepare User Core Payload
+    const userPayload = { ...formData };
+    if (editingData && !userPayload.password) {
+      delete userPayload.password;
+    }
+
+    try {
+      let userId = editingData?.id;
+      
+      // 1. Create or Update User Core Data
+      if (editingData) {
+        await api.patch(`/users/${userId}`, userPayload);
+      } else {
+        const response = await api.post('/users', userPayload);
+        userId = response.data.id;
+      }
+
+      // 2. Handle Rank Assignment
+      const { userRankId, rank, escuelaId, municipioId } = rankFormData;
+      
+      // Only proceed with rank operations if a rank is selected
+      if (rank && rank.trim() !== '') {
+        // Prepare rank payload with proper null handling
+        const rankPayload = {
+          userId: userId,
+          rank: rank,
+          escuelaId: rank === 'Director' && escuelaId ? parseInt(escuelaId) : undefined,
+          municipioId: rank === 'Coordinador' && municipioId ? parseInt(municipioId) : undefined,
+        };
+
+        // Remove undefined fields
+        Object.keys(rankPayload).forEach(key => {
+          if (rankPayload[key] === undefined) {
+            delete rankPayload[key];
+          }
+        });
+
+        if (userRankId) {
+          // UPDATE existing rank
+          await api.patch(`/user-ranks/${userRankId}`, rankPayload);
+          setSuccess(editingData 
+            ? 'Usuario y Rango actualizados exitosamente.' 
+            : 'Usuario creado y Rango asignado exitosamente.');
+        } else {
+          // CREATE new rank
+          await api.post('/user-ranks', rankPayload);
+          setSuccess(editingData 
+            ? 'Usuario actualizado y Rango asignado exitosamente.' 
+            : 'Usuario creado y Rango asignado exitosamente.');
+        }
+      } else if (userRankId) {
+        // If rank is cleared but an old rank exists, DELETE the rank assignment
+        await api.delete(`/user-ranks/${userRankId}`);
+        setSuccess('Usuario actualizado y Rango removido exitosamente.');
+      } else {
+        // No rank to assign and no existing rank
+        setSuccess(editingData 
+          ? 'Usuario actualizado exitosamente.' 
+          : 'Usuario creado exitosamente (sin rango asignado).');
+      }
+
+      handleCloseModal();
+      await fetchData();
+
+    } catch (err) {
+      console.error('Error saving user:', err);
+      setError(err.response?.data?.message || 'Error al guardar el usuario o asignar el rango');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Está seguro de que desea eliminar este usuario y su asignación de rango?')) {
+      try {
+        // Delete user rank first (if it exists)
+        const rankToDelete = userRanks.find(r => r.userId === id);
+        if (rankToDelete) {
+          await api.delete(`/user-ranks/${rankToDelete.id}`);
+        }
+        
+        // Delete core user record
+        await api.delete(`/users/${id}`);
+
+        setSuccess('Usuario eliminado exitosamente');
+        fetchData();
+      } catch (err) {
+        setError(err.response?.data?.message || 'Error al eliminar el usuario');
+      }
+    }
+  };
+
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     setSelectedFile(file);
@@ -203,7 +421,7 @@ const Users = () => {
       
       const response = await api.post('/users/bulk-upload', { data: validData });
       
-      setSuccess(`Se importaron exitosamente ${response.data.imported} registros`);
+      setSuccess(`Se importaron exitosamente ${response.data.imported} registros. Los rangos deben asignarse manualmente.`);
       handleCloseUploadModal();
       fetchData();
     } catch (err) {
@@ -221,118 +439,57 @@ const Users = () => {
     setPreviewData([]);
     setUploadProgress(0);
   };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    
-    // Don't send empty password when editing
-    const payload = { ...formData };
-    if (editingData && !payload.password) {
-      delete payload.password;
-    }
-
-    try {
-      if (editingData) {
-        await api.patch(`/users/${editingData.id}`, payload);
-        setSuccess('Usuario actualizado exitosamente');
-      } else {
-        await api.post('/users', payload);
-        setSuccess('Usuario creado exitosamente');
-      }
-      
-      handleCloseModal();
-      fetchData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Error al guardar el usuario');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
-      try {
-        await api.delete(`/users/${id}`);
-        setSuccess('Usuario eliminado exitosamente');
-        fetchData();
-      } catch (err) {
-        setError(err.response?.data?.message || 'Error al eliminar el usuario');
-      }
-    }
-  };
-
-  const handleEdit = (data) => {
-    setEditingData(data);
-    setFormData({
-      username: data.username,
-      email: data.email,
-      role: data.role,
-      password: '' // Don't pre-fill password for security
-    });
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingData(null);
-    setFormData({
-      username: '',
-      email: '',
-      password: '',
-      role: 'user'
-    });
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
+  
   const handleExportToExcel = async () => {
-  try {
-    setLoading(true);
-    
-    const dataToExport = users.map(usuario => ({
-      'ID': usuario.id,
-      'Nombre de Usuario': usuario.username,
-      'Email': usuario.email,
-      'Rol': usuario.role === 'admin' ? 'Administrador' : 'Usuario',
-      'Creado En': usuario.creadoEn 
-        ? new Date(usuario.creadoEn).toLocaleDateString() 
-        : 'N/A'
-    }));
+    try {
+      setLoading(true);
+      
+      const dataToExport = users.map(usuario => ({
+        'ID': usuario.id,
+        'Nombre de Usuario': usuario.username,
+        'Email': usuario.email,
+        'Rol Base': usuario.role === 'admin' ? 'Administrador' : 'Usuario',
+        'Rango Asignado': usuario.rankData?.rank || 'N/A',
+        'Asignación': usuario.rankData 
+          ? usuario.rankData.rank === 'Director' 
+            ? `Escuela: ${usuario.rankData.escuela?.nombre || usuario.rankData.escuelaId}`
+            : usuario.rankData.rank === 'Coordinador'
+              ? `Municipio: ${usuario.rankData.municipio?.nombre || usuario.rankData.municipioId}`
+              : 'Global'
+          : 'N/A',
+        'Creado En': usuario.creadoEn 
+          ? new Date(usuario.creadoEn).toLocaleDateString() 
+          : 'N/A'
+      }));
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
 
-    const maxWidth = 50;
-    const columnWidths = Object.keys(dataToExport[0] || {}).map(key => ({
-      wch: Math.min(
-        Math.max(
-          key.length,
-          ...dataToExport.map(row => String(row[key]).length)
-        ),
-        maxWidth
-      )
-    }));
-    worksheet['!cols'] = columnWidths;
+      const maxWidth = 50;
+      const columnWidths = Object.keys(dataToExport[0] || {}).map(key => ({
+        wch: Math.min(
+          Math.max(
+            key.length,
+            ...dataToExport.map(row => String(row[key] || '').length)
+          ),
+          maxWidth
+        )
+      }));
+      worksheet['!cols'] = columnWidths;
 
-    const now = new Date();
-    const filename = `usuarios_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
+      const now = new Date();
+      const filename = `usuarios_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
 
-    XLSX.writeFile(workbook, filename);
-    
-    setSuccess('Archivo Excel descargado exitosamente');
-  } catch (error) {
-    setError('Error al exportar los datos: ' + error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      XLSX.writeFile(workbook, filename);
+      
+      setSuccess('Archivo Excel descargado exitosamente');
+    } catch (error) {
+      setError('Error al exportar los datos: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!user || user.role !== 'admin') {
     return (
@@ -348,7 +505,7 @@ const Users = () => {
     return (
       <div className="text-center p-5">
         <Spinner animation="border" />
-        <p className="mt-2">Cargando usuarios...</p>
+        <p className="mt-2">Cargando usuarios y datos de asignación...</p>
       </div>
     );
   }
@@ -358,7 +515,7 @@ const Users = () => {
       <Row className="mb-4">
         <Col>
           <h2>👥 Gestión de Usuarios</h2>
-          <p className="text-muted">Gestión de información de usuarios</p>
+          <p className="text-muted">Gestión de información de usuarios y asignación de rangos</p>
         </Col>
         <Col xs="auto">
           {user?.role === 'admin' && (
@@ -407,7 +564,9 @@ const Users = () => {
                     <th>ID</th>
                     <th>Nombre de Usuario</th>
                     <th>Email</th>
-                    <th>Rol</th>
+                    <th>Rol Base</th>
+                    <th>Rango Asignado</th>
+                    <th>Asignación</th>
                     <th>Creado En</th>
                     {user?.role === 'admin' && <th>Acciones</th>}
                   </tr>
@@ -420,8 +579,35 @@ const Users = () => {
                       <td>{item.email}</td>
                       <td>
                         <Badge bg={item.role === 'admin' ? 'danger' : 'primary'}>
-                          {item.role === 'admin' ? 'Administrador' : 'Usuario'}
+                          {item.role === 'admin' ? 'Admin' : 'User'}
                         </Badge>
+                      </td>
+                      <td>
+                        {item.rankData ? (
+                          <Badge bg={
+                            item.rankData.rank === 'Director' ? 'warning' : 
+                            item.rankData.rank === 'Coordinador' ? 'info' : 
+                            'secondary'
+                          }>
+                            {item.rankData.rank}
+                          </Badge>
+                        ) : (
+                          <Badge bg="secondary">Sin Rango</Badge>
+                        )}
+                      </td>
+                      <td>
+                        {item.rankData?.rank === 'Director' && (
+                          <span>Escuela: {item.rankData.escuela?.nombre || item.rankData.escuelaId}</span>
+                        )}
+                        {item.rankData?.rank === 'Coordinador' && (
+                          <span>Muni: {item.rankData.municipio?.nombre || item.rankData.municipioId}</span>
+                        )}
+                        {item.rankData?.rank === 'Administrador' && (
+                          <span>Global</span>
+                        )}
+                        {!item.rankData && (
+                          <span className="text-muted">N/A</span>
+                        )}
                       </td>
                       <td>{item.creadoEn ? new Date(item.creadoEn).toLocaleDateString() : 'N/A'}</td>
                       {user?.role === 'admin' && (
@@ -468,6 +654,7 @@ const Users = () => {
               <li><strong>password</strong> - Contraseña (mínimo 6 caracteres)</li>
               <li><strong>role</strong> - Rol ('admin' o 'user') (opcional, por defecto 'user')</li>
             </ul>
+            <p className="mt-2 mb-0"><strong>NOTA:</strong> La asignación de Rangos (Director, Coordinador) y la escuela/municipio deben realizarse manualmente después de la importación.</p>
           </Alert>
           
           <Form.Group className="mb-3">
@@ -553,7 +740,7 @@ const Users = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Original Manual Entry Modal */}
+      {/* Manual Entry Modal */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>
@@ -599,7 +786,7 @@ const Users = () => {
               </Form.Text>
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Rol *</Form.Label>
+              <Form.Label>Rol Base *</Form.Label>
               <Form.Select
                 name="role"
                 value={formData.role}
@@ -610,6 +797,65 @@ const Users = () => {
                 <option value="admin">Administrador</option>
               </Form.Select>
             </Form.Group>
+
+            <hr className="my-4" />
+            <h5>Asignación de Rango y Alcance (Filtrado de Datos)</h5>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Rango</Form.Label>
+              <Form.Select
+                name="rank"
+                value={rankFormData.rank}
+                onChange={handleRankChange}
+              >
+                <option value="">Seleccione un Rango (Opcional)</option>
+                {RANKS.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </Form.Select>
+              <Form.Text className="text-muted">
+                Define el nivel de filtrado de datos del usuario.
+              </Form.Text>
+            </Form.Group>
+
+            {rankFormData.rank === 'Director' && (
+              <Form.Group className="mb-3">
+                <Form.Label>Escuela Asignada *</Form.Label>
+                <Form.Select
+                  name="escuelaId"
+                  value={rankFormData.escuelaId}
+                  onChange={handleRankChange}
+                  required
+                >
+                  <option value="">Seleccione una Escuela</option>
+                  {escuelas.map(e => (
+                    <option key={e.id} value={e.id}>
+                      {e.nombre} (ID: {e.id})
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            )}
+
+            {rankFormData.rank === 'Coordinador' && (
+              <Form.Group className="mb-3">
+                <Form.Label>Municipio Asignado *</Form.Label>
+                <Form.Select
+                  name="municipioId"
+                  value={rankFormData.municipioId}
+                  onChange={handleRankChange}
+                  required
+                >
+                  <option value="">Seleccione un Municipio</option>
+                  {municipios.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.nombre} (ID: {m.id})
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            )}
+
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleCloseModal}>

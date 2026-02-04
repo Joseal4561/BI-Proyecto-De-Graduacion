@@ -24,6 +24,15 @@ export class NecesidadMobiliario {
   @Column({ type: 'date', nullable: true, name: 'fecha_reporte' })
   fechaReporte: Date;
 
+  @Column({
+    type: 'enum',
+    enum: ['pendiente', 'en revision', 'aprobada', 'desaprobada', 'en proceso', 'completada'],
+    default: 'pendiente',
+    nullable: false,
+    name: 'estado'
+  })
+  estado: 'pendiente' | 'en revision' | 'aprobada' | 'desaprobada' | 'en proceso' | 'completada';
+
   @ManyToOne(() => Escuela)
   @JoinColumn({ name: 'escuela_id' })
   escuela: Escuela;

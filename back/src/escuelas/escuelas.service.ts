@@ -6,6 +6,7 @@ import { CreateEscuelaDto } from './dto/create-escuela.dto';
 import { UpdateEscuelaDto } from './dto/update-escuela.dto';
 import { MunicipioService } from '../municipios/municipio.service';
 import { TipoEscuelaService } from '../tipo-escuela/tipo-escuela.service';
+import { UserRankService } from '../user-rank/user-rank.service'; //
 
 @Injectable()
 export class EscuelaService {
@@ -14,23 +15,58 @@ export class EscuelaService {
     private escuelaRepository: Repository<Escuela>,
     private municipioService: MunicipioService,
     private tipoEscuelaService: TipoEscuelaService,
+    private userRankService: UserRankService,
   ) {}
 
-  async findAll(): Promise<Escuela[]> {
+  async findAll(userId: number): Promise<Escuela[]> {
+    // Get filter based on rank: { escuelaId: X } or { municipioId: Y } or null
+    const filter = await this.userRankService.getDataFilterForUser(userId);
+
+    // Map filter keys to Escuela entity column names:
+    // - escuelaId (from UserRank) maps to `id` on Escuela
+    // - municipioId maps to `municipioId`
+    const whereCondition: any = {};
+    if (filter) {
+      if (filter.escuelaId !== undefined) {
+        whereCondition.id = filter.escuelaId;
+      } else if (filter.municipioId !== undefined) {
+        whereCondition.municipioId = filter.municipioId;
+      }
+    }
+
     return this.escuelaRepository.find({
+      where: whereCondition, // Apply rank-based filter
       relations: ['municipio', 'tipo'],
       order: { nombre: 'ASC' },
     });
   }
 
-  async findOne(id: number): Promise<Escuela> {
+  async findOne(id: number, userId: number): Promise<Escuela> {
+    const filter = await this.userRankService.getDataFilterForUser(userId);
+    
+    // If user is a Director, they can ONLY fetch their specific school ID
+    if (filter?.escuelaId && filter.escuelaId !== id) {
+      throw new ForbiddenException('No tiene permiso para acceder a esta escuela');
+    }
+
+    // Build where condition combining id and rank filter (map keys as needed)
+    const whereCondition: any = { id };
+    if (filter) {
+      if (filter.escuelaId !== undefined) {
+        // redundant because we already checked escuelaId above, but include for completeness
+        whereCondition.id = filter.escuelaId;
+      } else if (filter.municipioId !== undefined) {
+        whereCondition.municipioId = filter.municipioId;
+      }
+    }
+
     const escuela = await this.escuelaRepository.findOne({
-      where: { id },
+      where: whereCondition,
       relations: ['municipio', 'tipo'],
     });
 
     if (!escuela) {
-      throw new NotFoundException(`Escuela with ID ${id} not found`);
+      throw new NotFoundException(`Escuela with ID ${id} not found or access denied`);
     }
 
     return escuela;
@@ -51,20 +87,20 @@ export class EscuelaService {
     return this.escuelaRepository.save(newEscuela);
   }
 
-  async update(id: number, updateEscuelaDto: UpdateEscuelaDto, userRole: string): Promise<Escuela> {
+  async update(id: number, updateEscuelaDto: UpdateEscuelaDto, userRole: string, userId: number): Promise<Escuela> {
     if (userRole !== 'admin') {
       throw new ForbiddenException('Only admin users can update schools');
     }
-    const escuela = await this.findOne(id);
+    const escuela = await this.findOne(id, userId);
     Object.assign(escuela, updateEscuelaDto);
     return this.escuelaRepository.save(escuela);
   }
 
-  async remove(id: number, userRole: string): Promise<void> {
+  async remove(id: number, userRole: string, userId: number): Promise<void> {
     if (userRole !== 'admin') {
       throw new ForbiddenException('Only admin users can delete schools');
     }
-    const escuela = await this.findOne(id);
+    const escuela = await this.findOne(id, userId);
     await this.escuelaRepository.remove(escuela);
   }
 

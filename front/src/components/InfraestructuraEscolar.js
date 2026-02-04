@@ -121,7 +121,7 @@ const InfraestructuraEscolar = () => {
       dataTableRef.current = $(tableRef.current).DataTable({
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-        searching: false, // Disable global search
+        searching: true, // Disable global search
         language: {
           lengthMenu: "Mostrar _MENU_ registros",
           info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
@@ -648,7 +648,7 @@ const InfraestructuraEscolar = () => {
           <p className="text-muted">Registro detallado de infraestructura y servicios por escuela</p>
         </Col>
         <Col xs="auto">
-          {user?.role === 'admin' && (
+          {(user?.role === 'admin' || user?.role === 'user') && (
             <div className="d-flex gap-2">
               <Button
                 variant="success"
@@ -729,7 +729,7 @@ const InfraestructuraEscolar = () => {
                 <thead>
                   <tr>
                     {/* Datos Generales */}
-                    <th className="bg-general">Escuela</th>
+                    <th className="bg-general">Establecimiento</th>
                     <th className="bg-general">Modalidad</th>
                     <th className="bg-general">Área</th>
                     <th className="bg-general">Jornada</th>
@@ -779,7 +779,7 @@ const InfraestructuraEscolar = () => {
                     <th className="bg-mobiliario">Cátedras</th>
                     
                     {/* Acciones */}
-                    {user?.role === 'admin' && <th className="bg-acciones">Acciones</th>}
+                    {(user?.role === 'admin' || user?.role === 'user') && <th className="bg-acciones">Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -860,7 +860,7 @@ const InfraestructuraEscolar = () => {
                       <td className="text-center">{item.noCatedras || 0}</td>
                       
                       {/* Acciones */}
-                      {user?.role === 'admin' && (
+                      {(user?.role === 'admin' || user?.role === 'user') && (
                         <td className="text-nowrap">
                           <Button
                             variant="outline-primary"
@@ -942,7 +942,7 @@ const InfraestructuraEscolar = () => {
                 <Table striped bordered size="sm">
                   <thead>
                     <tr>
-                      <th>Escuela</th>
+                      <th>Establecimiento</th>
                       <th>Modalidad</th>
                       <th>Área</th>
                       <th>Aulas</th>
@@ -1004,14 +1004,14 @@ const InfraestructuraEscolar = () => {
                 <Row>
                   <Col md={12}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Escuela *</Form.Label>
+                      <Form.Label>Establecimiento *</Form.Label>
                       <Form.Select
                         name="escuelaId"
                         value={formData.escuelaId}
                         onChange={handleChange}
                         required
                       >
-                        <option value="">Seleccione una escuela</option>
+                        <option value="">Seleccione un Establecimiento</option>
                         {escuelas.map(e => (
                           <option key={e.id} value={e.id}>
                             {e.nombre}

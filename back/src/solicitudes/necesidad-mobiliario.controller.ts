@@ -11,32 +11,32 @@ export class NecesidadMobiliarioController {
 
   @Post()
   create(@Body() createNecesidadMobiliarioDto: CreateSolicitudDto, @Request() req) {
-    return this.necesidadMobiliarioService.create(createNecesidadMobiliarioDto, req.user.role);
+    return this.necesidadMobiliarioService.create(createNecesidadMobiliarioDto, req.user.role, req.user.id);
   }
 
   @Get()
-  findAll() {
-    return this.necesidadMobiliarioService.findAll();
+  findAll(@Request() req) {
+    return this.necesidadMobiliarioService.findAll(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.necesidadMobiliarioService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.necesidadMobiliarioService.findOne(+id, req.user.id);
   }
 
   @Get('escuela/:escuelaId')
-  findByEscuela(@Param('escuelaId') escuelaId: string) {
-    return this.necesidadMobiliarioService.findByEscuela(+escuelaId);
+  findByEscuela(@Param('escuelaId') escuelaId: string, @Request() req) {
+    return this.necesidadMobiliarioService.findByEscuela(+escuelaId, req.user.id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateNecesidadMobiliarioDto: UpdateSolicitudDto, @Request() req) {
-    return this.necesidadMobiliarioService.update(+id, updateNecesidadMobiliarioDto, req.user.role);
+    return this.necesidadMobiliarioService.update(+id, updateNecesidadMobiliarioDto, req.user.role, req.user.id);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
-    return this.necesidadMobiliarioService.remove(+id, req.user.role);
+    return this.necesidadMobiliarioService.remove(+id, req.user.role, req.user.id);
   }
 
   @Post('bulk-upload')

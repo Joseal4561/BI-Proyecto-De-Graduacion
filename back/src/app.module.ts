@@ -18,6 +18,8 @@ import { NecesidadMobiliario } from './entities/solicitud.entity';
 import { NecesidadMobiliarioModule } from './solicitudes/necesidad-mobiliario.module';
 import { InfraestructuraEscolar } from './entities/infraestructura.entity';
 import { InfraestructuraEscolarModule } from './infraestructura/infraestructura.module';
+import { UserRank } from './entities/user-rank.entity';
+import { UserRankModule } from './user-rank/user-rank.module';
 
 @Module({
   imports: [
@@ -34,7 +36,7 @@ import { InfraestructuraEscolarModule } from './infraestructura/infraestructura.
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Escuela, DatosEducativos, TipoEscuela, Municipio, PrediccionIA, NecesidadMobiliario, InfraestructuraEscolar],
+        entities: [User, Escuela, DatosEducativos, TipoEscuela, Municipio, PrediccionIA, NecesidadMobiliario, InfraestructuraEscolar, UserRank],
         synchronize: false, 
       }),
      
@@ -48,6 +50,7 @@ import { InfraestructuraEscolarModule } from './infraestructura/infraestructura.
     PrediccionesIaModule,
     NecesidadMobiliarioModule,
     InfraestructuraEscolarModule,
+    UserRankModule,
   ],
 })
 export class AppModule {}

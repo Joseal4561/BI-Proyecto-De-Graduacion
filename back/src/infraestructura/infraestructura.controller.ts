@@ -9,34 +9,34 @@ import { UpdateInfraestructuraEscolarDto } from './dto/UpdateInfraestructura.dto
 export class InfraestructuraEscolarController {
   constructor(private readonly infraestructuraEscolarService: InfraestructuraEscolarService) {}
 
-  @Post()
-  create(@Body() createInfraestructuraEscolarDto: CreateInfraestructuraEscolarDto, @Request() req) {
-    return this.infraestructuraEscolarService.create(createInfraestructuraEscolarDto, req.user.role);
-  }
-
   @Get()
-  findAll() {
-    return this.infraestructuraEscolarService.findAll();
+  findAll(@Request() req) {
+    return this.infraestructuraEscolarService.findAll(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.infraestructuraEscolarService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.infraestructuraEscolarService.findOne(+id, req.user.id);
   }
 
   @Get('escuela/:escuelaId')
-  findByEscuela(@Param('escuelaId') escuelaId: string) {
-    return this.infraestructuraEscolarService.findByEscuela(+escuelaId);
+  findByEscuela(@Param('escuelaId') escuelaId: string, @Request() req) {
+    return this.infraestructuraEscolarService.findByEscuela(+escuelaId, req.user.id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateInfraestructuraEscolarDto: UpdateInfraestructuraEscolarDto, @Request() req) {
-    return this.infraestructuraEscolarService.update(+id, updateInfraestructuraEscolarDto, req.user.role);
+    return this.infraestructuraEscolarService.update(+id, updateInfraestructuraEscolarDto, req.user.role, req.user.id);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
-    return this.infraestructuraEscolarService.remove(+id, req.user.role);
+    return this.infraestructuraEscolarService.remove(+id, req.user.role, req.user.id);
+  }
+
+  @Post()
+  create(@Body() createInfraestructuraEscolarDto: CreateInfraestructuraEscolarDto, @Request() req) {
+    return this.infraestructuraEscolarService.create(createInfraestructuraEscolarDto, req.user.role, req.user.id);
   }
 
   @Post('bulk-upload')

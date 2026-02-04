@@ -19,10 +19,10 @@ import Papa from 'papaparse';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/axiosConfig';
 
-const Solicitudes = () => {
+const SolicitudesFinalizadas = () => {
   const { user } = useAuth();
+  const [solicitudesFinalizadas, setSolicitudesFinalizadas] = useState([]);
   const [necesidades, setNecesidades] = useState([]);
-  const [escuelas, setEscuelas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -42,43 +42,43 @@ const Solicitudes = () => {
   
   // Form state
   const [formData, setFormData] = useState({
-    escuelaId: '',
-    necesidadEscritorios: 0,
-    necesidadMesasHexagonales: 0,
-    necesidadPizarras: 0,
-    necesidadCatedras: 0,
-    fecha_Reporte: '',
-    estado: 'pendiente'
+    necesidad_id: '',
+    estado: 'APROBADA',
+    escritorios_entregados: 0,
+    mesas_hexagonales_entregadas: 0,
+    pizarras_entregadas: 0,
+    catedras_entregadas: 0,
+    fecha_finalizacion: ''
   });
 
   useEffect(() => {
     fetchData();
-    fetchEscuelas();
+    fetchNecesidades();
   }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/necesidad-mobiliario');
-      const necesidadesArray = Array.isArray(response.data) ? response.data : [];
-      setNecesidades(necesidadesArray);
+      const response = await api.get('/solicitud-finalizada');
+      const finalizadasArray = Array.isArray(response.data) ? response.data : [];
+      setSolicitudesFinalizadas(finalizadasArray);
     } catch (err) {
-      setError('Error al cargar las necesidades de mobiliario');
-      console.error('Error fetching necesidades:', err);
-      setNecesidades([]);
+      setError('Error al cargar las solicitudes finalizadas');
+      console.error('Error fetching solicitudes finalizadas:', err);
+      setSolicitudesFinalizadas([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchEscuelas = async () => {
+  const fetchNecesidades = async () => {
     try {
-      const response = await api.get('/escuelas');
-      const escuelasArray = Array.isArray(response.data) ? response.data : [];
-      setEscuelas(escuelasArray);
+      const response = await api.get('/necesidad-mobiliario');
+      const necesidadesArray = Array.isArray(response.data) ? response.data : [];
+      setNecesidades(necesidadesArray);
     } catch (err) {
-      console.error('Error al cargar las escuelas:', err);
-      setEscuelas([]);
+      console.error('Error al cargar las necesidades:', err);
+      setNecesidades([]);
     }
   };
 
@@ -170,13 +170,13 @@ const Solicitudes = () => {
   const processFileData = (rawData) => {
     const processed = rawData.map((row, index) => {
       const mappedRow = {
-        escuelaId: findIdByName(escuelas, row.escuela || row.escuela_nombre || ''),
-        necesidadEscritorios: parseInt(row.necesidad_escritorios || row.escritorios || 0) || 0,
-        necesidadMesasHexagonales: parseInt(row.necesidad_mesas_hexagonales || row.mesas_hexagonales || 0) || 0,
-        necesidadPizarras: parseInt(row.necesidad_pizarras || row.pizarras || 0) || 0,
-        necesidadCatedras: parseInt(row.necesidad_catedras || row.catedras || 0) || 0,
-        fecha_Reporte: row.fecha_reporte || row.fecha || '',
-        estado: row.estado || row.status || 'pendiente',
+        necesidad_id: parseInt(row.necesidad_id || row.id_necesidad || 0) || 0,
+        estado: (row.estado || 'APROBADA').toUpperCase(),
+        escritorios_entregados: parseInt(row.escritorios_entregados || row.escritorios || 0) || 0,
+        mesas_hexagonales_entregadas: parseInt(row.mesas_hexagonales_entregadas || row.mesas_hexagonales || 0) || 0,
+        pizarras_entregadas: parseInt(row.pizarras_entregadas || row.pizarras || 0) || 0,
+        catedras_entregadas: parseInt(row.catedras_entregadas || row.catedras || 0) || 0,
+        fecha_finalizacion: row.fecha_finalizacion || row.fecha || '',
         rowIndex: index + 2
       };
       return mappedRow;
@@ -188,29 +188,22 @@ const Solicitudes = () => {
     return processed;
   };
 
-  const findIdByName = (list, name) => {
-    if (!name || !Array.isArray(list)) return null;
-    
-    const item = list.find(item => 
-      item.nombre?.toLowerCase().includes(name.toLowerCase()) ||
-      name.toLowerCase().includes(item.nombre?.toLowerCase())
-    );
-    return item ? item.id : null;
-  };
-
   const validateFileData = (data) => {
     const errors = [];
-    const validEstados = ['pendiente', 'en revision', 'aprobada', 'desaprobada', 'en proceso', 'completada'];
     data.forEach((row) => {
-      if (!row.escuelaId) {
-        errors.push(`Fila ${row.rowIndex}: Escuela no encontrada o no especificada`);
+      if (!row.necesidad_id || row.necesidad_id === 0) {
+        errors.push(`Fila ${row.rowIndex}: ID de necesidad no especificado o inválido`);
+      }
+      
+      if (!['APROBADA', 'DENEGADA'].includes(row.estado)) {
+        errors.push(`Fila ${row.rowIndex}: Estado debe ser "APROBADA" o "DENEGADA"`);
       }
       
       const numericFields = [
-        { key: 'necesidadEscritorios', name: 'Escritorios' },
-        { key: 'necesidadMesasHexagonales', name: 'Mesas Hexagonales' },
-        { key: 'necesidadPizarras', name: 'Pizarras' },
-        { key: 'necesidadCatedras', name: 'Cátedras' }
+        { key: 'escritorios_entregados', name: 'Escritorios Entregados' },
+        { key: 'mesas_hexagonales_entregadas', name: 'Mesas Hexagonales Entregadas' },
+        { key: 'pizarras_entregadas', name: 'Pizarras Entregadas' },
+        { key: 'catedras_entregadas', name: 'Cátedras Entregadas' }
       ];
       
       numericFields.forEach(field => {
@@ -218,10 +211,6 @@ const Solicitudes = () => {
           errors.push(`Fila ${row.rowIndex}: ${field.name} debe ser un número válido mayor o igual a 0`);
         }
       });
-
-      if (row.estado && !validEstados.includes(row.estado)) {
-        errors.push(`Fila ${row.rowIndex}: estado debe ser uno de: ${validEstados.join(', ')}`);
-      }
     });
     return errors;
   };
@@ -234,9 +223,9 @@ const Solicitudes = () => {
 
     setIsProcessing(true);
     try {
-      const validData = fileData.filter(row => row.escuelaId);
+      const validData = fileData.filter(row => row.necesidad_id > 0);
       
-      const response = await api.post('/necesidad-mobiliario/bulk-upload', { data: validData });
+      const response = await api.post('/solicitud-finalizada/bulk-upload', { data: validData });
       
       setSuccess(`Se importaron exitosamente ${response.data.imported} registros`);
       handleCloseUploadModal();
@@ -264,24 +253,24 @@ const Solicitudes = () => {
 
     try {
       if (editingData) {
-        await api.patch(`/necesidad-mobiliario/${editingData.idNecesidad}`, formData);
-        setSuccess('Necesidad de mobiliario actualizada exitosamente');
+        await api.patch(`/solicitud-finalizada/${editingData.id_finalizada}`, formData);
+        setSuccess('Solicitud finalizada actualizada exitosamente');
       } else {
-        await api.post('/necesidad-mobiliario', formData);
-        setSuccess('Necesidad de mobiliario creada exitosamente');
+        await api.post('/solicitud-finalizada', formData);
+        setSuccess('Solicitud finalizada creada exitosamente');
       }
       
       handleCloseModal();
       fetchData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al guardar la necesidad de mobiliario');
+      setError(err.response?.data?.message || 'Error al guardar la solicitud finalizada');
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Está seguro de que desea eliminar este registro?')) {
       try {
-        await api.delete(`/necesidad-mobiliario/${id}`);
+        await api.delete(`/solicitud-finalizada/${id}`);
         setSuccess('Registro eliminado exitosamente');
         fetchData();
       } catch (err) {
@@ -293,13 +282,13 @@ const Solicitudes = () => {
   const handleEdit = (data) => {
     setEditingData(data);
     setFormData({
-      escuelaId: data.escuela?.id || data.escuelaId || '',
-      necesidadEscritorios: data.necesidadEscritorios || 0,
-      necesidadMesasHexagonales: data.necesidadMesasHexagonales || 0,
-      necesidadPizarras: data.necesidadPizarras || 0,
-      necesidadCatedras: data.necesidadCatedras || 0,
-      fecha_Reporte: data.fechaReporte ? new Date(data.fechaReporte).toISOString().split('T')[0] : '',
-      estado: data.estado || 'pendiente'
+      necesidad_id: data.necesidad_id || '',
+      estado: data.estado || 'APROBADA',
+      escritorios_entregados: data.escritorios_entregados || 0,
+      mesas_hexagonales_entregadas: data.mesas_hexagonales_entregadas || 0,
+      pizarras_entregadas: data.pizarras_entregadas || 0,
+      catedras_entregadas: data.catedras_entregadas || 0,
+      fecha_finalizacion: data.fecha_finalizacion ? new Date(data.fecha_finalizacion).toISOString().split('T')[0] : ''
     });
     setShowModal(true);
   };
@@ -308,13 +297,13 @@ const Solicitudes = () => {
     setShowModal(false);
     setEditingData(null);
     setFormData({
-      escuelaId: '',
-      necesidadEscritorios: 0,
-      necesidadMesasHexagonales: 0,
-      necesidadPizarras: 0,
-      necesidadCatedras: 0,
-      fecha_Reporte: '',
-      estado: 'pendiente'
+      necesidad_id: '',
+      estado: 'APROBADA',
+      escritorios_entregados: 0,
+      mesas_hexagonales_entregadas: 0,
+      pizarras_entregadas: 0,
+      catedras_entregadas: 0,
+      fecha_finalizacion: ''
     });
   };
 
@@ -323,7 +312,7 @@ const Solicitudes = () => {
     let newValue = value;
 
     // Parse to integer for numeric fields
-    if (['escuelaId', 'necesidadEscritorios', 'necesidadMesasHexagonales', 'necesidadPizarras', 'necesidadCatedras'].includes(name)) {
+    if (['necesidad_id', 'escritorios_entregados', 'mesas_hexagonales_entregadas', 'pizarras_entregadas', 'catedras_entregadas'].includes(name)) {
       newValue = value ? parseInt(value, 10) : 0;
     }
 
@@ -333,64 +322,65 @@ const Solicitudes = () => {
     }));
   };
 
-  const getTotalNecesidad = (item) => {
-    return (item.necesidadEscritorios || 0) + 
-           (item.necesidadMesasHexagonales || 0) + 
-           (item.necesidadPizarras || 0) + 
-           (item.necesidadCatedras || 0);
+  const getTotalEntregado = (item) => {
+    return (item.escritorios_entregados || 0) + 
+           (item.mesas_hexagonales_entregadas || 0) + 
+           (item.pizarras_entregadas || 0) + 
+           (item.catedras_entregadas || 0);
   };
 
   const handleExportToExcel = async () => {
-  try {
-    setLoading(true);
-    
-    const dataToExport = necesidades.map(necesidad => ({
-      'Escuela': necesidad.escuela?.nombre || 'N/A',
-      'Escritorios': necesidad.necesidadEscritorios || 0,
-      'Mesas Hexagonales': necesidad.necesidadMesasHexagonales || 0,
-      'Pizarras': necesidad.necesidadPizarras || 0,
-      'Cátedras': necesidad.necesidadCatedras || 0,
-      'Total': getTotalNecesidad(necesidad),
-      'Fecha Reporte': necesidad.fechaReporte 
-        ? new Date(necesidad.fechaReporte).toLocaleDateString() 
-        : 'N/A',
-      'Estado': necesidad.estado || 'pendiente'
-    }));
+    try {
+      setLoading(true);
+      
+      const dataToExport = solicitudesFinalizadas.map(solicitud => ({
+        'ID Necesidad': solicitud.necesidad_id || 'N/A',
+        'Escuela': solicitud.necesidad?.escuela?.nombre || 'N/A',
+        'Estado': solicitud.estado || 'N/A',
+        'Escritorios Entregados': solicitud.escritorios_entregados || 0,
+        'Mesas Hexagonales Entregadas': solicitud.mesas_hexagonales_entregadas || 0,
+        'Pizarras Entregadas': solicitud.pizarras_entregadas || 0,
+        'Cátedras Entregadas': solicitud.catedras_entregadas || 0,
+        'Total Entregado': getTotalEntregado(solicitud),
+        'Fecha Finalización': solicitud.fecha_finalizacion 
+          ? new Date(solicitud.fecha_finalizacion).toLocaleDateString() 
+          : 'N/A'
+      }));
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Necesidades Mobiliario');
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Solicitudes Finalizadas');
 
-    const maxWidth = 50;
-    const columnWidths = Object.keys(dataToExport[0] || {}).map(key => ({
-      wch: Math.min(
-        Math.max(
-          key.length,
-          ...dataToExport.map(row => String(row[key]).length)
-        ),
-        maxWidth
-      )
-    }));
-    worksheet['!cols'] = columnWidths;
+      const maxWidth = 50;
+      const columnWidths = Object.keys(dataToExport[0] || {}).map(key => ({
+        wch: Math.min(
+          Math.max(
+            key.length,
+            ...dataToExport.map(row => String(row[key]).length)
+          ),
+          maxWidth
+        )
+      }));
+      worksheet['!cols'] = columnWidths;
 
-    const now = new Date();
-    const filename = `necesidades_mobiliario_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
+      const now = new Date();
+      const filename = `solicitudes_finalizadas_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
 
-    XLSX.writeFile(workbook, filename);
-    
-    setSuccess('Archivo Excel descargado exitosamente');
-  } catch (error) {
-    setError('Error al exportar los datos: ' + error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      XLSX.writeFile(workbook, filename);
+      
+      setSuccess('Archivo Excel descargado exitosamente');
+    } catch (error) {
+      setError('Error al exportar los datos: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="text-center p-5">
         <Spinner animation="border" />
-        <p className="mt-2">Cargando necesidades de mobiliario...</p>
+        <p className="mt-2">Cargando solicitudes finalizadas...</p>
       </div>
     );
   }
@@ -399,11 +389,11 @@ const Solicitudes = () => {
     <div>
       <Row className="mb-4">
         <Col>
-          <h2>Gestión de Necesidades de Mobiliario</h2>
-          <p className="text-muted">Registro de necesidades de mobiliario por escuela</p>
+          <h2>Gestión de Solicitudes Finalizadas</h2>
+          <p className="text-muted">Registro de solicitudes aprobadas y denegadas</p>
         </Col>
         <Col xs="auto">
-          {(user?.role === 'admin' || user?.role === 'user') && (
+          {user?.role === 'admin' && (
             <div className="d-flex gap-2">
               <Button
                 variant="success"
@@ -415,12 +405,12 @@ const Solicitudes = () => {
                 variant="primary"
                 onClick={() => setShowModal(true)}
               >
-                ➕ Nueva Necesidad
+                ➕ Nueva Solicitud Finalizada
               </Button>
               <Button
                 variant="info"
                 onClick={handleExportToExcel}
-                disabled={necesidades.length === 0}
+                disabled={solicitudesFinalizadas.length === 0}
               >
                 Exportar a Excel
               </Button>
@@ -434,65 +424,67 @@ const Solicitudes = () => {
 
       <Card>
         <Card.Header>
-          <h5 className="mb-0">Lista de Necesidades de Mobiliario</h5>
+          <h5 className="mb-0">Lista de Solicitudes Finalizadas</h5>
         </Card.Header>
         <Card.Body className="p-0">
-          {necesidades.length === 0 ? (
+          {solicitudesFinalizadas.length === 0 ? (
             <div className="text-center p-4">
-              <p className="text-muted">No hay necesidades de mobiliario registradas</p>
+              <p className="text-muted">No hay solicitudes finalizadas registradas</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table striped hover className="mb-0">
                 <thead className="bg-light">
                   <tr>
+                    <th>ID Necesidad</th>
                     <th>Escuela</th>
+                    <th>Estado</th>
                     <th>Escritorios</th>
                     <th>Mesas Hex.</th>
                     <th>Pizarras</th>
                     <th>Cátedras</th>
                     <th>Total</th>
-                    <th>Fecha Reporte</th>
-                    <th>Estado</th>
-                    {(user?.role === 'admin' || user?.role === 'user') && <th>Acciones</th>}
+                    <th>Fecha Finalización</th>
+                    {user?.role === 'admin' && <th>Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {necesidades.map((item) => (
-                    <tr key={item.idNecesidad}>
-                      <td>{item.escuela?.nombre || 'N/A'}</td>
+                  {solicitudesFinalizadas.map((item) => (
+                    <tr key={item.id_finalizada}>
+                      <td>{item.necesidad_id}</td>
+                      <td>{item.necesidad?.escuela?.nombre || 'N/A'}</td>
                       <td>
-                        <Badge bg={item.necesidadEscritorios > 0 ? 'warning' : 'secondary'}>
-                          {item.necesidadEscritorios}
+                        <Badge bg={item.estado === 'APROBADA' ? 'success' : 'danger'}>
+                          {item.estado}
                         </Badge>
                       </td>
                       <td>
-                        <Badge bg={item.necesidadMesasHexagonales > 0 ? 'warning' : 'secondary'}>
-                          {item.necesidadMesasHexagonales}
+                        <Badge bg={item.escritorios_entregados > 0 ? 'info' : 'secondary'}>
+                          {item.escritorios_entregados}
                         </Badge>
                       </td>
                       <td>
-                        <Badge bg={item.necesidadPizarras > 0 ? 'warning' : 'secondary'}>
-                          {item.necesidadPizarras}
+                        <Badge bg={item.mesas_hexagonales_entregadas > 0 ? 'info' : 'secondary'}>
+                          {item.mesas_hexagonales_entregadas}
                         </Badge>
                       </td>
                       <td>
-                        <Badge bg={item.necesidadCatedras > 0 ? 'warning' : 'secondary'}>
-                          {item.necesidadCatedras}
+                        <Badge bg={item.pizarras_entregadas > 0 ? 'info' : 'secondary'}>
+                          {item.pizarras_entregadas}
                         </Badge>
                       </td>
                       <td>
-                        <Badge bg={getTotalNecesidad(item) > 0 ? 'danger' : 'success'}>
-                          {getTotalNecesidad(item)}
+                        <Badge bg={item.catedras_entregadas > 0 ? 'info' : 'secondary'}>
+                          {item.catedras_entregadas}
                         </Badge>
                       </td>
-                      <td>{item.fechaReporte ? new Date(item.fechaReporte).toLocaleDateString() : 'N/A'}</td>
                       <td>
-                        <Badge bg={item.estado === 'pendiente' ? 'secondary' : item.estado === 'en revision' ? 'info' : item.estado === 'aprobada' ? 'success' : item.estado === 'desaprobada' ? 'danger' : item.estado === 'en proceso' ? 'warning' : 'success'}>
-                          {item.estado || 'N/A'}
+                        <Badge bg={getTotalEntregado(item) > 0 ? 'primary' : 'secondary'}>
+                          {getTotalEntregado(item)}
                         </Badge>
                       </td>
-                      {(user?.role === 'admin' || user?.role === 'user') && (
+                      <td>{item.fecha_finalizacion ? new Date(item.fecha_finalizacion).toLocaleDateString() : 'N/A'}</td>
+                      {user?.role === 'admin' && (
                         <td>
                           <Button
                             variant="outline-primary"
@@ -505,7 +497,7 @@ const Solicitudes = () => {
                           <Button
                             variant="outline-danger"
                             size="sm"
-                            onClick={() => handleDelete(item.idNecesidad)}
+                            onClick={() => handleDelete(item.id_finalizada)}
                           >
                             🗑️
                           </Button>
@@ -523,19 +515,19 @@ const Solicitudes = () => {
       {/* File Upload Modal */}
       <Modal show={showUploadModal} onHide={handleCloseUploadModal} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Importar Necesidades de Mobiliario desde Archivo</Modal.Title>
+          <Modal.Title>Importar Solicitudes Finalizadas desde Archivo</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Alert variant="info">
             <strong>Formato requerido:</strong> El archivo debe contener las siguientes columnas:
             <ul className="mb-0 mt-2">
-              <li><strong>escuela</strong> - Nombre de la escuela</li>
-              <li><strong>necesidad_escritorios</strong> - Cantidad de escritorios necesarios (número)</li>
-              <li><strong>necesidad_mesas_hexagonales</strong> - Cantidad de mesas hexagonales (número)</li>
-              <li><strong>necesidad_pizarras</strong> - Cantidad de pizarras (número)</li>
-              <li><strong>necesidad_catedras</strong> - Cantidad de cátedras (número)</li>
-              <li><strong>fecha_reporte</strong> - Fecha del reporte (opcional)</li>
-              <li><strong>estado</strong> - Estado de la solicitud (opcional: pendiente, en revision, aprobada, desaprobada, en proceso, completada)</li>
+              <li><strong>necesidad_id</strong> - ID de la necesidad (número)</li>
+              <li><strong>estado</strong> - Estado de la solicitud: "APROBADA" o "DENEGADA"</li>
+              <li><strong>escritorios_entregados</strong> - Cantidad de escritorios entregados (número)</li>
+              <li><strong>mesas_hexagonales_entregadas</strong> - Cantidad de mesas hexagonales (número)</li>
+              <li><strong>pizarras_entregadas</strong> - Cantidad de pizarras (número)</li>
+              <li><strong>catedras_entregadas</strong> - Cantidad de cátedras (número)</li>
+              <li><strong>fecha_finalizacion</strong> - Fecha de finalización</li>
             </ul>
           </Alert>
           
@@ -579,25 +571,25 @@ const Solicitudes = () => {
                 <Table striped bordered size="sm">
                   <thead>
                     <tr>
-                      <th>Escuela</th>
+                      <th>ID Necesidad</th>
+                      <th>Estado</th>
                       <th>Escritorios</th>
                       <th>Mesas Hex.</th>
                       <th>Pizarras</th>
                       <th>Cátedras</th>
                       <th>Fecha</th>
-                      <th>Estado</th>
                     </tr>
                   </thead>
                   <tbody>
                     {previewData.map((row, index) => (
                       <tr key={index}>
-                        <td>{escuelas.find(e => e.id === row.escuelaId)?.nombre || 'NO ENCONTRADO'}</td>
-                        <td>{row.necesidadEscritorios}</td>
-                        <td>{row.necesidadMesasHexagonales}</td>
-                        <td>{row.necesidadPizarras}</td>
-                        <td>{row.necesidadCatedras}</td>
-                        <td>{row.fecha_Reporte || 'N/A'}</td>
-                        <td>{row.estado || 'pendiente'}</td>
+                        <td>{row.necesidad_id}</td>
+                        <td>{row.estado}</td>
+                        <td>{row.escritorios_entregados}</td>
+                        <td>{row.mesas_hexagonales_entregadas}</td>
+                        <td>{row.pizarras_entregadas}</td>
+                        <td>{row.catedras_entregadas}</td>
+                        <td>{row.fecha_finalizacion || 'N/A'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -634,36 +626,49 @@ const Solicitudes = () => {
       <Modal show={showModal} onHide={handleCloseModal} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
-            {editingData ? 'Editar' : 'Crear'} Necesidad de Mobiliario
+            {editingData ? 'Editar' : 'Crear'} Solicitud Finalizada
           </Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label>Escuela *</Form.Label>
+              <Form.Label>Necesidad de Mobiliario *</Form.Label>
               <Form.Select
-                name="escuelaId"
-                value={formData.escuelaId}
+                name="necesidad_id"
+                value={formData.necesidad_id}
                 onChange={handleChange}
                 required
               >
-                <option value="">Seleccione una escuela</option>
-                {escuelas.map(e => (
-                  <option key={e.id} value={e.id}>
-                    {e.nombre}
+                <option value="">Seleccione una necesidad</option>
+                {necesidades.map(n => (
+                  <option key={n.idNecesidad} value={n.idNecesidad}>
+                    {n.escuela?.nombre || `ID: ${n.idNecesidad}`} - {new Date(n.fechaReporte).toLocaleDateString()}
                   </option>
                 ))}
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Estado *</Form.Label>
+              <Form.Select
+                name="estado"
+                value={formData.estado}
+                onChange={handleChange}
+                required
+              >
+                <option value="APROBADA">APROBADA</option>
+                <option value="DENEGADA">DENEGADA</option>
               </Form.Select>
             </Form.Group>
 
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Necesidad de Escritorios</Form.Label>
+                  <Form.Label>Escritorios Entregados</Form.Label>
                   <Form.Control
                     type="number"
-                    name="necesidadEscritorios"
-                    value={formData.necesidadEscritorios}
+                    name="escritorios_entregados"
+                    value={formData.escritorios_entregados}
                     onChange={handleChange}
                     min="0"
                   />
@@ -671,38 +676,11 @@ const Solicitudes = () => {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Necesidad de Mesas Hexagonales</Form.Label>
+                  <Form.Label>Mesas Hexagonales Entregadas</Form.Label>
                   <Form.Control
                     type="number"
-                    name="necesidadMesasHexagonales"
-                    value={formData.necesidadMesasHexagonales}
-                    onChange={handleChange}
-                    min="0"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Necesidad de Pizarras</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="necesidadPizarras"
-                    value={formData.necesidadPizarras}
-                    onChange={handleChange}
-                    min="0"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Necesidad de Cátedras</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="necesidadCatedras"
-                    value={formData.necesidadCatedras}
+                    name="mesas_hexagonales_entregadas"
+                    value={formData.mesas_hexagonales_entregadas}
                     onChange={handleChange}
                     min="0"
                   />
@@ -713,33 +691,40 @@ const Solicitudes = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Fecha de Reporte</Form.Label>
+                  <Form.Label>Pizarras Entregadas</Form.Label>
                   <Form.Control
-                    type="date"
-                    name="fecha_Reporte"
-                    value={formData.fecha_Reporte}
+                    type="number"
+                    name="pizarras_entregadas"
+                    value={formData.pizarras_entregadas}
                     onChange={handleChange}
+                    min="0"
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Estado</Form.Label>
-                  <Form.Select
-                    name="estado"
-                    value={formData.estado}
+                  <Form.Label>Cátedras Entregadas</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="catedras_entregadas"
+                    value={formData.catedras_entregadas}
                     onChange={handleChange}
-                  >
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en revision">En Revisión</option>
-                    <option value="aprobada">Aprobada</option>
-                    <option value="desaprobada">Desaprobada</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="completada">Completada</option>
-                  </Form.Select>
+                    min="0"
+                  />
                 </Form.Group>
               </Col>
             </Row>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha de Finalización *</Form.Label>
+              <Form.Control
+                type="date"
+                name="fecha_finalizacion"
+                value={formData.fecha_finalizacion}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleCloseModal}>
@@ -755,4 +740,4 @@ const Solicitudes = () => {
   );
 };
 
-export default Solicitudes;
+export default SolicitudesFinalizadas;

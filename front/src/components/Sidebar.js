@@ -25,7 +25,7 @@ const Sidebar = () => {
       path: '/ai-predictions',
       label: 'Predicciones IA',
       icon: '🤖',
-      roles: ['admin', 'user']
+      roles: ['admin']
     },
     {
       path: '/solicitudes-mobiliario',
@@ -43,7 +43,7 @@ const Sidebar = () => {
       path: '/Dash-infra',
       label: 'Dashboard Infraestructura',
       icon: '🏢',
-      roles: ['admin', 'user']
+      roles: ['admin']
     },
     {
       path: '/reportes-infraestructura',

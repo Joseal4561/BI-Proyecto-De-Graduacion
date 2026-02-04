@@ -6,6 +6,7 @@ import { CreateInfraestructuraEscolarDto } from './dto/CreateInfraestructura.dto
 import { UpdateInfraestructuraEscolarDto } from './dto/UpdateInfraestructura.dto';
 import { EscuelaService } from '../escuelas/escuelas.service';
 import { NecesidadMobiliarioService } from '../solicitudes/necesidad-mobiliario.service';
+import { UserRankService } from '../user-rank/user-rank.service';
 
 @Injectable()
 export class InfraestructuraEscolarService {
@@ -14,16 +15,50 @@ export class InfraestructuraEscolarService {
     private infraestructuraRepository: Repository<InfraestructuraEscolar>,
     private escuelaService: EscuelaService,
     private necesidadMobiliarioService: NecesidadMobiliarioService,
+    private userRankService: UserRankService,
   ) {}
 
-  async findAll(): Promise<InfraestructuraEscolar[]> {
+  async findAll(userId: number): Promise<InfraestructuraEscolar[]> {
+    // Get rank-based filter: { escuelaId: X } or { municipioId: Y } or null
+    const filter = await this.userRankService.getDataFilterForUser(userId);
+    
+    // Build where condition - if filter exists, restrict to user's accessible schools/municipios
+    let whereCondition = {};
+    if (filter) {
+      if (filter.escuelaId) {
+        whereCondition = { escuelaId: filter.escuelaId };
+      } else if (filter.municipioId) {
+        // For municipio filter, we need to query schools in that municipio
+        // This is handled via the escuela relation
+        whereCondition = { escuela: { municipio: { id: filter.municipioId } } };
+      }
+    }
+
     return this.infraestructuraRepository.find({
+      where: whereCondition,
       relations: ['escuela', 'necesidadMobiliario'],
       order: { idInfraestructura: 'DESC' },
     });
   }
 
-  async findOne(id: number): Promise<InfraestructuraEscolar> {
+  async findOne(id: number, userId: number): Promise<InfraestructuraEscolar> {
+    const filter = await this.userRankService.getDataFilterForUser(userId);
+    
+    // If user is a Director, they can ONLY fetch infraestructura for their specific school
+    if (filter?.escuelaId) {
+      const infraestructura = await this.infraestructuraRepository.findOne({
+        where: { idInfraestructura: id, escuelaId: filter.escuelaId },
+        relations: ['escuela', 'necesidadMobiliario'],
+      });
+
+      if (!infraestructura) {
+        throw new NotFoundException(`Infraestructura escolar with ID ${id} not found or access denied`);
+      }
+
+      return infraestructura;
+    }
+
+    // For Coordinador or Administrador, fetch and validate via escuela rank check
     const infraestructura = await this.infraestructuraRepository.findOne({
       where: { idInfraestructura: id },
       relations: ['escuela', 'necesidadMobiliario'],
@@ -33,10 +68,20 @@ export class InfraestructuraEscolarService {
       throw new NotFoundException(`Infraestructura escolar with ID ${id} not found`);
     }
 
+    // Validate access to the related school
+    if (filter?.municipioId) {
+      if (infraestructura.escuela.municipioId !== filter.municipioId) {
+        throw new ForbiddenException('No tiene permiso para acceder a esta infraestructura');
+      }
+    }
+
     return infraestructura;
   }
 
-  async findByEscuela(escuelaId: number): Promise<InfraestructuraEscolar[]> {
+  async findByEscuela(escuelaId: number, userId: number): Promise<InfraestructuraEscolar[]> {
+    // Validate user has access to this school
+    await this.escuelaService.findOne(escuelaId, userId);
+
     return this.infraestructuraRepository.find({
       where: { escuelaId },
       relations: ['escuela', 'necesidadMobiliario'],
@@ -44,19 +89,19 @@ export class InfraestructuraEscolarService {
     });
   }
 
-  async create(createInfraestructuraDto: CreateInfraestructuraEscolarDto, userRole: string): Promise<InfraestructuraEscolar> {
-    if (userRole !== 'admin') {
-      throw new ForbiddenException('Only admin users can create school infrastructure records');
+  async create(createInfraestructuraDto: CreateInfraestructuraEscolarDto, userRole: string, userId: number): Promise<InfraestructuraEscolar> {
+    if (!['admin', 'user'].includes(userRole)) {
+      throw new ForbiddenException('Only admin and user roles can create school infrastructure records');
     }
 
     const { escuelaId, idSolicitud, ...rest } = createInfraestructuraDto;
 
-    // Validate that the school exists
-    await this.escuelaService.findOne(escuelaId);
+    // Validate user has access to this school (enforces rank-based restrictions)
+    await this.escuelaService.findOne(escuelaId, userId);
 
     // Validate that the necesidad mobiliario exists if provided
     if (idSolicitud) {
-      await this.necesidadMobiliarioService.findOne(idSolicitud);
+      await this.necesidadMobiliarioService.findOne(idSolicitud, userId);
     }
 
     const newInfraestructura = this.infraestructuraRepository.create(rest);
@@ -69,33 +114,33 @@ export class InfraestructuraEscolarService {
     return this.infraestructuraRepository.save(newInfraestructura);
   }
 
-  async update(id: number, updateInfraestructuraDto: UpdateInfraestructuraEscolarDto, userRole: string): Promise<InfraestructuraEscolar> {
-    if (userRole !== 'admin') {
-      throw new ForbiddenException('Only admin users can update school infrastructure records');
+  async update(id: number, updateInfraestructuraDto: UpdateInfraestructuraEscolarDto, userRole: string, userId: number): Promise<InfraestructuraEscolar> {
+    if (!['admin', 'user'].includes(userRole)) {
+      throw new ForbiddenException('Only admin and user roles can update school infrastructure records');
     }
 
-    const infraestructura = await this.findOne(id);
+    const infraestructura = await this.findOne(id, userId);
 
-    // If escuelaId is being updated, validate it exists
+    // If escuelaId is being updated, validate user has access to the new school
     if (updateInfraestructuraDto.escuelaId) {
-      await this.escuelaService.findOne(updateInfraestructuraDto.escuelaId);
+      await this.escuelaService.findOne(updateInfraestructuraDto.escuelaId, userId);
     }
 
-    // If idSolicitud is being updated, validate it exists
+    // If idSolicitud is being updated, validate it exists and user can access it
     if (updateInfraestructuraDto.idSolicitud) {
-      await this.necesidadMobiliarioService.findOne(updateInfraestructuraDto.idSolicitud);
+      await this.necesidadMobiliarioService.findOne(updateInfraestructuraDto.idSolicitud, userId);
     }
 
     Object.assign(infraestructura, updateInfraestructuraDto);
     return this.infraestructuraRepository.save(infraestructura);
   }
 
-  async remove(id: number, userRole: string): Promise<void> {
-    if (userRole !== 'admin') {
-      throw new ForbiddenException('Only admin users can delete school infrastructure records');
+  async remove(id: number, userRole: string, userId: number): Promise<void> {
+    if (!['admin', 'user'].includes(userRole)) {
+      throw new ForbiddenException('Only admin and user roles can delete school infrastructure records');
     }
 
-    const infraestructura = await this.findOne(id);
+    const infraestructura = await this.findOne(id, userId);
     await this.infraestructuraRepository.remove(infraestructura);
   }
 
@@ -117,13 +162,13 @@ export class InfraestructuraEscolarService {
             continue;
           }
 
-          // Validate that the school exists
-          await this.escuelaService.findOne(item.escuelaId);
+          // Validate that the school exists (use userId 1 as bulk insert is admin-only)
+          await this.escuelaService.findOne(item.escuelaId, 1);
 
           // Validate necesidad mobiliario if provided
           if (item.idSolicitud) {
             try {
-              await this.necesidadMobiliarioService.findOne(item.idSolicitud);
+              await this.necesidadMobiliarioService.findOne(item.idSolicitud, 1);
             } catch (error) {
               errors.push(`Fila ${item.rowIndex}: Solicitud de mobiliario no encontrada (ID: ${item.idSolicitud})`);
               failed++;
@@ -161,7 +206,7 @@ export class InfraestructuraEscolarService {
       // Validate escuelaId
       try {
         if (item.escuelaId) {
-          await this.escuelaService.findOne(item.escuelaId);
+          await this.escuelaService.findOne(item.escuelaId, 1);
         } else {
           errors.push(`Fila ${item.rowIndex}: escuelaId es obligatorio`);
         }

@@ -15,23 +15,23 @@ export class EscuelaController {
   }
 
   @Get()
-  findAll() {
-    return this.escuelaService.findAll();
+  findAll(@Request() req) {
+    return this.escuelaService.findAll(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.escuelaService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.escuelaService.findOne(+id, req.user.id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateEscuelaDto: UpdateEscuelaDto, @Request() req) {
-    return this.escuelaService.update(+id, updateEscuelaDto, req.user.role);
+    return this.escuelaService.update(+id, updateEscuelaDto, req.user.role, req.user.id);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
-    return this.escuelaService.remove(+id, req.user.role);
+    return this.escuelaService.remove(+id, req.user.role, req.user.id);
   }
 
   @Post('bulk-upload')

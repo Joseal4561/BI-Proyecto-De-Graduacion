@@ -13,6 +13,7 @@ import Solicitudes from './components/Solicitudes';
 import InfraestructuraEscolar from './components/InfraestructuraEscolar';
 import DashboardInfraestructura from './components/DashboardInfraestructura';
 import ReportesInfraestructura from './components/Reportesinfraestructura';
+import SolicitudesFinalizadas from './components/solicitudes_finalizadas';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -166,6 +167,16 @@ function AppContent() {
           <ProtectedRoute>
             <Layout>
               <ReportesInfraestructura />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/solicitudes-finalizadas" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SolicitudesFinalizadas />
             </Layout>
           </ProtectedRoute>
         } 

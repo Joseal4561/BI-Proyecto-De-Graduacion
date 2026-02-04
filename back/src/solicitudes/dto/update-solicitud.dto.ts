@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateSolicitudDto } from './create-solicitud.dto';
-import { IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsEnum } from 'class-validator';
 
 export class UpdateSolicitudDto extends PartialType(CreateSolicitudDto) {
   @IsNumber()
@@ -26,4 +26,8 @@ export class UpdateSolicitudDto extends PartialType(CreateSolicitudDto) {
   @IsString()
   @IsOptional()
   fecha_Reporte?: string;
+
+  @IsEnum(['pendiente', 'en revision', 'aprobada', 'desaprobada', 'en proceso', 'completada'])
+  @IsOptional()
+  estado?: 'pendiente' | 'en revision' | 'aprobada' | 'desaprobada' | 'en proceso' | 'completada';
 }
