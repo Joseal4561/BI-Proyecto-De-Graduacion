@@ -793,8 +793,8 @@ const Users = () => {
                 onChange={handleChange}
                 required
               >
-                <option value="user">Usuario</option>
-                <option value="admin">Administrador</option>
+                <option value="user">Usuario común</option>
+                <option value="admin">Gerente</option>
               </Form.Select>
             </Form.Group>
 
@@ -808,13 +808,13 @@ const Users = () => {
                 value={rankFormData.rank}
                 onChange={handleRankChange}
               >
-                <option value="">Seleccione un Rango (Opcional)</option>
+                <option value="">Seleccione un Rango</option>
                 {RANKS.map(r => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </Form.Select>
               <Form.Text className="text-muted">
-                Define el nivel de filtrado de datos del usuario.
+                Define el nivel de filtrado de datos del usuario (Director = Escuela Unica | Coordinador = Municipio Unico | Administrador = todas las escuelas).
               </Form.Text>
             </Form.Group>
 

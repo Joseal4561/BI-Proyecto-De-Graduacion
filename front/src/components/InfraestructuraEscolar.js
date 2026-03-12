@@ -1143,7 +1143,7 @@ const InfraestructuraEscolar = () => {
                   </Col>
                 </Row>
 
-                <h6 className="mb-3 mt-3">Instalaciones</h6>
+                <h6 className="mb-3 mt-3">Instalaciones con las que cuenta</h6>
                 <Row>
                   <Col md={4}>
                     <Form.Check
@@ -1151,7 +1151,7 @@ const InfraestructuraEscolar = () => {
                       name="tieneDireccion"
                       checked={formData.tieneDireccion}
                       onChange={handleChange}
-                      label="Tiene Dirección"
+                      label="Dirección"
                       className="mb-2"
                     />
                   </Col>
@@ -1161,7 +1161,7 @@ const InfraestructuraEscolar = () => {
                       name="tieneCocina"
                       checked={formData.tieneCocina}
                       onChange={handleChange}
-                      label="Tiene Cocina"
+                      label="Cocina"
                       className="mb-2"
                     />
                   </Col>
@@ -1171,7 +1171,7 @@ const InfraestructuraEscolar = () => {
                       name="tieneBodega"
                       checked={formData.tieneBodega}
                       onChange={handleChange}
-                      label="Tiene Bodega"
+                      label="Bodega"
                       className="mb-2"
                     />
                   </Col>
@@ -1191,7 +1191,7 @@ const InfraestructuraEscolar = () => {
                       name="tieneLaboratorio"
                       checked={formData.tieneLaboratorio}
                       onChange={handleChange}
-                      label="Tiene Laboratorio"
+                      label="Laboratorio"
                       className="mb-2"
                     />
                   </Col>
@@ -1211,7 +1211,7 @@ const InfraestructuraEscolar = () => {
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Sanitarios Lavables</Form.Label>
+                      <Form.Label>Indoros</Form.Label>
                       <Form.Control
                         type="number"
                         name="sanitariosLavables"
@@ -1223,7 +1223,7 @@ const InfraestructuraEscolar = () => {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Sanitarios Letrinas</Form.Label>
+                      <Form.Label>migitorios</Form.Label>
                       <Form.Control
                         type="number"
                         name="sanitariosLetrinas"
@@ -1273,7 +1273,7 @@ const InfraestructuraEscolar = () => {
                       name="tienePiscina"
                       checked={formData.tienePiscina}
                       onChange={handleChange}
-                      label="Tiene Piscina"
+                      label="Piscina"
                       className="mb-2"
                     />
                   </Col>
@@ -1534,7 +1534,7 @@ const InfraestructuraEscolar = () => {
                       name="cuentaConPredio"
                       checked={formData.cuentaConPredio}
                       onChange={handleChange}
-                      label="Cuenta con Predio"
+                      label="Cuenta con terreno disponible"
                       className="mt-4"
                     />
                   </Col>
@@ -1576,7 +1576,7 @@ const InfraestructuraEscolar = () => {
               </Tab>
 
               {/* Tab 5: Mobiliario */}
-              <Tab eventKey="mobiliario" title="Mobiliario">
+              <Tab eventKey="mobiliario" title="Mobiliario Existente">
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">

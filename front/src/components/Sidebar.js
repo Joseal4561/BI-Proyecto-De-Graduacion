@@ -21,12 +21,7 @@ const Sidebar = () => {
       icon: '👥',
       roles: ['admin']
     },
-    {
-      path: '/ai-predictions',
-      label: 'Predicciones IA',
-      icon: '🤖',
-      roles: ['admin']
-    },
+
     {
       path: '/solicitudes-mobiliario',
       label: 'Solicitudes Mobiliario',

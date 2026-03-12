@@ -292,13 +292,14 @@ const Solicitudes = () => {
 
   const handleEdit = (data) => {
     setEditingData(data);
+    const rawFecha = data.fechaReporte || data.fecha_reporte || data.fecha_Reporte || data.fecha || '';
     setFormData({
       escuelaId: data.escuela?.id || data.escuelaId || '',
       necesidadEscritorios: data.necesidadEscritorios || 0,
       necesidadMesasHexagonales: data.necesidadMesasHexagonales || 0,
       necesidadPizarras: data.necesidadPizarras || 0,
       necesidadCatedras: data.necesidadCatedras || 0,
-      fecha_Reporte: data.fechaReporte ? new Date(data.fechaReporte).toISOString().split('T')[0] : '',
+      fecha_Reporte: rawFecha ? new Date(rawFecha).toISOString().split('T')[0] : '',
       estado: data.estado || 'pendiente'
     });
     setShowModal(true);
@@ -351,8 +352,8 @@ const Solicitudes = () => {
       'Pizarras': necesidad.necesidadPizarras || 0,
       'Cátedras': necesidad.necesidadCatedras || 0,
       'Total': getTotalNecesidad(necesidad),
-      'Fecha Reporte': necesidad.fechaReporte 
-        ? new Date(necesidad.fechaReporte).toLocaleDateString() 
+      'Fecha Reporte': (necesidad.fechaReporte || necesidad.fecha_reporte || necesidad.fecha_Reporte || necesidad.fecha)
+        ? new Date(necesidad.fechaReporte || necesidad.fecha_reporte || necesidad.fecha_Reporte || necesidad.fecha).toLocaleDateString()
         : 'N/A',
       'Estado': necesidad.estado || 'pendiente'
     }));
@@ -486,7 +487,9 @@ const Solicitudes = () => {
                           {getTotalNecesidad(item)}
                         </Badge>
                       </td>
-                      <td>{item.fechaReporte ? new Date(item.fechaReporte).toLocaleDateString() : 'N/A'}</td>
+                      <td>{(item.fechaReporte || item.fecha_reporte || item.fecha_Reporte || item.fecha)
+                        ? new Date(item.fechaReporte || item.fecha_reporte || item.fecha_Reporte || item.fecha).toLocaleDateString()
+                        : 'N/A'}</td>
                       <td>
                         <Badge bg={item.estado === 'pendiente' ? 'secondary' : item.estado === 'en revision' ? 'info' : item.estado === 'aprobada' ? 'success' : item.estado === 'desaprobada' ? 'danger' : item.estado === 'en proceso' ? 'warning' : 'success'}>
                           {item.estado || 'N/A'}

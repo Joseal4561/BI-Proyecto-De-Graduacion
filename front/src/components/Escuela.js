@@ -449,7 +449,7 @@ const Escuelas = () => {
                 <thead className="bg-light">
                   <tr>
                     <th>Código UDI</th>
-                    <th>Nombre</th>
+                    <th>Establecimiento</th>
                     <th>Dirección</th>
                     <th>Teléfono</th>
                     <th>Municipio</th>
@@ -510,7 +510,7 @@ const Escuelas = () => {
             <strong>Formato requerido:</strong> El archivo debe contener las siguientes columnas:
             <ul className="mb-0 mt-2">
               <li><strong>codigoUdi</strong> - Código UDI (opcional)</li>
-              <li><strong>nombre</strong> - Nombre de la escuela</li>
+              <li><strong>Establecimiento</strong> - Nombre de la escuela</li>
               <li><strong>direccion</strong> - Dirección (opcional)</li>
               <li><strong>telefono</strong> - Teléfono (opcional)</li>
               <li><strong>fecha_Fundacion</strong> - Fecha de fundación (opcional)</li>
@@ -562,7 +562,7 @@ const Escuelas = () => {
                   <thead>
                     <tr>
                       <th>Código UDI</th>
-                      <th>Nombre</th>
+                      <th>Establecimiento</th>
                       <th>Dirección</th>
                       <th>Teléfono</th>
                       <th>Municipio</th>
@@ -626,7 +626,7 @@ const Escuelas = () => {
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label>Nombre *</Form.Label>
+              <Form.Label>Establecimiento *</Form.Label>
               <Form.Control
                 type="text"
                 name="nombre"
