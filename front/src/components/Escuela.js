@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Table, 
   Button, 
@@ -18,6 +18,9 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/axiosConfig';
+import $ from 'jquery';
+import 'datatables.net-bs5';
+import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
 const Escuelas = () => {
   const { user } = useAuth();
@@ -40,6 +43,8 @@ const Escuelas = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [previewData, setPreviewData] = useState([]);
+  const tableRef = useRef(null);
+  const dataTableRef = useRef(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -58,6 +63,46 @@ const Escuelas = () => {
     fetchData();
     fetchRelationships();
   }, []);
+
+  useEffect(() => {
+    if (!loading && escuelas.length > 0 && tableRef.current) {
+      // Destroy existing DataTable if it exists
+      if (dataTableRef.current) {
+        dataTableRef.current.destroy();
+      }
+
+      // Initialize DataTable
+      dataTableRef.current = $(tableRef.current).DataTable({
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+        searching: true,
+        language: {
+          lengthMenu: "Mostrar _MENU_ registros",
+          info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+          infoEmpty: "Mostrando 0 a 0 de 0 registros",
+          infoFiltered: "(filtrado de _MAX_ registros totales)",
+          paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+          },
+          zeroRecords: "No se encontraron registros coincidentes"
+        },
+        order: [[0, 'asc']],
+        columnDefs: [
+          { orderable: false, targets: -1 } // Disable ordering on actions column
+        ]
+      });
+    }
+
+    return () => {
+      if (dataTableRef.current) {
+        dataTableRef.current.destroy();
+        dataTableRef.current = null;
+      }
+    };
+  }, [loading, escuelas]);
 
   const fetchData = async () => {
     try {
@@ -444,9 +489,40 @@ const Escuelas = () => {
               <p className="text-muted">No hay escuelas registradas</p>
             </div>
           ) : (
-            <div className="table-responsive">
-              <Table striped hover className="mb-0">
-                <thead className="bg-light">
+            <div className="table-responsive p-3">
+              <style>{`
+                .table thead th {
+                  position: sticky;
+                  top: 0;
+                  z-index: 10;
+                  vertical-align: top;
+                  white-space: nowrap;
+                  font-size: 0.85rem;
+                  padding: 0.5rem;
+                }
+                .table tbody td {
+                  font-size: 0.85rem;
+                  padding: 0.5rem;
+                  vertical-align: middle;
+                }
+                .dataTables_wrapper .dataTables_filter {
+                  float: right;
+                  text-align: right;
+                  margin-bottom: 1rem;
+                }
+                .dataTables_wrapper .dataTables_length {
+                  float: left;
+                  margin-bottom: 1rem;
+                }
+                .dataTables_wrapper .dataTables_info {
+                  padding-top: 1rem;
+                }
+                .dataTables_wrapper .dataTables_paginate {
+                  padding-top: 1rem;
+                }
+              `}</style>
+              <table ref={tableRef} className="table table-striped table-hover table-sm" style={{ width: '100%' }}>
+                <thead>
                   <tr>
                     <th>Código UDI</th>
                     <th>Establecimiento</th>
@@ -473,11 +549,11 @@ const Escuelas = () => {
                       <td>{item.jornada || 'N/A'}</td>
                       <td>{item.fechaFundacion ? new Date(item.fechaFundacion).toLocaleDateString() : 'N/A'}</td>
                       {user?.role === 'admin' && (
-                        <td>
+                        <td className="text-nowrap">
                           <Button
                             variant="outline-primary"
                             size="sm"
-                            className="me-2"
+                            className="me-1"
                             onClick={() => handleEdit(item)}
                           >
                             ✏️
@@ -494,7 +570,7 @@ const Escuelas = () => {
                     </tr>
                   ))}
                 </tbody>
-              </Table>
+              </table>
             </div>
           )}
         </Card.Body>
