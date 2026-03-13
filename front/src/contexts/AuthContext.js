@@ -11,6 +11,20 @@ const initialState = {
   isAuthenticated: false,
 };
 
+// Helper function to check if JWT token is expired
+const isTokenExpired = (token) => {
+  if (!token) return true;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Date.now() / 1000;
+    return payload.exp < currentTime;
+  } catch (error) {
+    // If we can't parse the token, consider it expired
+    return true;
+  }
+};
+
 const authReducer = (state, action) => {
   switch (action.type) {
     case 'LOGIN_SUCCESS':
@@ -47,6 +61,15 @@ export const AuthProvider = ({ children }) => {
     const user = localStorage.getItem('user');
     
     if (token && user) {
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        // Token is expired, clear storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
+      
       try {
         dispatch({
           type: 'LOGIN_SUCCESS',
@@ -116,10 +139,17 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGOUT' });
   };
 
+  // Check if user is authenticated (token exists and not expired)
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    return token && !isTokenExpired(token);
+  };
+
   const value = {
     ...state,
     login,
     logout,
+    checkAuth,
   };
 
   return (
