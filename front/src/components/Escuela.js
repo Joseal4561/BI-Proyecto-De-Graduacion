@@ -702,6 +702,17 @@ const Escuelas = () => {
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
             <Form.Group className="mb-3">
+              <Form.Label>Código UDI</Form.Label>
+              <Form.Control
+                type="text"
+                name="codigoUdi"
+                value={formData.codigoUdi}
+                onChange={handleChange}
+                placeholder="Opcional"
+                maxLength={20}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Establecimiento *</Form.Label>
               <Form.Control
                 type="text"
