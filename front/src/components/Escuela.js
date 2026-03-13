@@ -228,7 +228,7 @@ const Escuelas = () => {
         nombre: row.nombre || row.name || '',
         direccion: row.direccion || row.address || '',
         telefono: row.telefono || row.phone || '',
-        fecha_Fundacion: row.fecha_Fundacion || row.foundation_date || '',
+        fechaFundacion: row.fecha_Fundacion || row.foundation_date || '',
         municipioId: findIdByName(municipios, row.municipio || row.municipio_nombre || ''),
         tipoId: findIdByName(tiposEscuela, row.tipo || row.tipo_nombre || ''),
         modalidad: row.modalidad || '',
@@ -254,8 +254,8 @@ const Escuelas = () => {
       'Nombre': escuela.nombre,
       'Dirección': escuela.direccion || 'N/A',
       'Teléfono': escuela.telefono || 'N/A',
-      'Fecha de Fundación': escuela.fecha_Fundacion 
-        ? new Date(escuela.fecha_Fundacion).toLocaleDateString() 
+      'Fecha de Fundación': escuela.fechaFundacion 
+        ? new Date(escuela.fechaFundacion).toLocaleDateString() 
         : 'N/A',
       'Municipio': escuela.municipio?.nombre || 'N/A',
       'Tipo': escuela.tipo?.nombre || 'N/A',
@@ -393,7 +393,7 @@ const Escuelas = () => {
       nombre: data.nombre,
       direccion: data.direccion || '',
       telefono: data.telefono || '',
-      fecha_Fundacion: data.fecha_Fundacion ? new Date(data.fecha_Fundacion).toISOString().split('T')[0] : '',
+      fechaFundacion: data.fechaFundacion ? new Date(data.fechaFundacion).toISOString().split('T')[0] : '',
       municipioId: data.municipio?.id || '',
       tipoId: data.tipo?.id || '',
       modalidad: data.modalidad || '',
@@ -655,7 +655,7 @@ const Escuelas = () => {
                         <td>{row.nombre}</td>
                         <td>{row.direccion || 'N/A'}</td>
                         <td>{row.telefono || 'N/A'}</td>
-                        <td>{row.fecha_Fundacion || 'N/A'}</td>
+                        <td>{row.fechaFundacion || 'N/A'}</td>
                         <td>{municipios.find(m => m.id === row.municipioId)?.nombre || 'NO ENCONTRADO'}</td>
                         <td>{tiposEscuela.find(t => t.id === row.tipoId)?.nombre || 'NO ENCONTRADO'}</td>
                         <td>{row.modalidad || 'N/A'}</td>
@@ -744,8 +744,8 @@ const Escuelas = () => {
               <Form.Label>Fecha de Fundación</Form.Label>
               <Form.Control
                 type="date"
-                name="fecha_Fundacion"
-                value={formData.fecha_Fundacion}
+                name="fechaFundacion"
+                value={formData.fechaFundacion}
                 onChange={handleChange}
               />
             </Form.Group>
